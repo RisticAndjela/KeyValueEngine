@@ -3,9 +3,25 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/src/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/target" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/bloom_filter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/cache/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/lsm_tables/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/memtable/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/sstable/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/structures/write_ahead_log/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/deserialization/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/serialization/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/target" />
+      <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/target" />
+      <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/target" />
+      <excludeFolder url="file://$MODULE_DIR$/probabilistic_type_operations/bloom_filter/target" />
+      <excludeFolder url="file://$MODULE_DIR$/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

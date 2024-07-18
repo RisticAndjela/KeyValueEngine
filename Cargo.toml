@@ -2,5 +2,12 @@
 name = "KeyValueEngine"
 version = "0.1.0"
 edition = "2021"
+authors = ["Andjela Ristic"]
 
 [dependencies]
+hash_with_seed = { path = "help_structures/hash_with_seed" }
+bloom_filter={path = "probabilistic_type_operations/bloom_filter" }
+cache={path = "structures/cache"}
+
+[workspace]
+members = ["structures/*"]

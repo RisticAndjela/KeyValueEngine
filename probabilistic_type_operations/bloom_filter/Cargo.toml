@@ -1,0 +1,9 @@
+[package]
+name = "bloom_filter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hash_with_seed = { path = "../../help_structures/hash_with_seed" }
+rand = "0.9.0-alpha.1"
+byteorder = "1.5.0"
