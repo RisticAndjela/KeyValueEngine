@@ -1,4 +1,3 @@
-use byteorder::{BigEndian, ByteOrder};
 use crate::bloom_filter::BloomFilter;
 use hash_with_seed::{Hash};
 

@@ -10,4 +10,4 @@ bloom_filter={path = "probabilistic_type_operations/bloom_filter" }
 cache={path = "structures/cache"}
 
 [workspace]
-members = ["structures/*"]
+members = [ "probabilistic_type_operations/count_min_sketch","structures/*"]

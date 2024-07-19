@@ -52,6 +52,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7e3352a27098ba6b09546e5f13b15165e6a88b5c2723afecb3ea9576b27e3ea"
 
 [[package]]
+name = "count_min_sketch"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "hash_with_seed",
+]
+
+[[package]]
 name = "crypto-common"
 version = "0.2.0-pre.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

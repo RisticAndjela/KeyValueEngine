@@ -1,11 +1,9 @@
 extern crate core;
-
-//tests for Bloom filter
 mod hash_with_seed;
 pub use hash_with_seed::{Hash, create_hash_funcs};
 #[cfg(test)]
 mod tests{
-    use core::hash;
+    use crate::{equals, hash_with_seed};
 
     #[test]
     fn test_hash_function() {
@@ -17,9 +15,21 @@ mod tests{
             assert_ne!(result, 0);
         }
     }
+    #[test]
     fn test_serialize_deserialize(){
-        let data = b"test data";
-        let hash1 = hash::Hash{data};
-
+        let data:&[u8;32] = b"test data                       ";
+        let hash1 = crate::Hash{ seed: *data };
+        let serialized=hash1.serialize_seed();
+        let hash2=crate::Hash::deserialize_seed(serialized);
+        assert!(equals(&hash1,&hash2));
     }
+}
+
+pub fn equals(hash1:&Hash,hash2:&Hash)->bool{
+    for (i,&seed) in hash1.seed.iter().enumerate(){
+        if hash2.seed[i]!=seed {
+            return false;
+        }
+    }
+    true
 }

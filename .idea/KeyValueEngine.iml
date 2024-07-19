@@ -14,6 +14,7 @@
       <sourceFolder url="file://$MODULE_DIR$/structures/memtable/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/sstable/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/write_ahead_log/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/count_min_sketch/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/deserialization/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/serialization/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

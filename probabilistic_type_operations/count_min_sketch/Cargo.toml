@@ -1,0 +1,8 @@
+[package]
+name = "count_min_sketch"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hash_with_seed={path="../../help_structures/hash_with_seed"}
+byteorder = "1.5.0"
