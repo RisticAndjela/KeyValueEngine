@@ -110,6 +110,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyper_log_log"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "hash_with_seed",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -196,6 +204,10 @@ dependencies = [
  "getrandom",
  "zerocopy",
 ]
+
+[[package]]
+name = "sim_hash"
+version = "0.1.0"
 
 [[package]]
 name = "sstable"

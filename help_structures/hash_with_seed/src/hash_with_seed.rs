@@ -1,5 +1,5 @@
 use md5::{Digest, Md5};
-use byteorder::{ByteOrder, BigEndian};
+use byteorder::{ByteOrder, BigEndian, WriteBytesExt};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Hash {
@@ -21,7 +21,13 @@ impl Hash {
         seed.copy_from_slice(data);
         Hash { seed }
     }
-
+    pub fn create_hash() -> Self {
+        let start_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_secs() as u32;
+        let mut seed = vec![0u8; 64];
+        let mut cursor = &mut seed[0..4];
+        cursor.write_u32::<BigEndian>(start_time).expect("Write failed");
+        Hash { seed }
+    }
 }
 pub fn create_hash_funcs(k: u32) -> Vec<Hash> {
     let mut hashes = Vec::new();
@@ -35,3 +41,4 @@ pub fn create_hash_funcs(k: u32) -> Vec<Hash> {
 
     hashes
 }
+

@@ -16,7 +16,9 @@
       <sourceFolder url="file://$MODULE_DIR$/structures/write_ahead_log/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/count_min_sketch/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/deserialization/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/hyper_log_log/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/serialization/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/sim_hash/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/target" />
