@@ -208,6 +208,10 @@ dependencies = [
 [[package]]
 name = "sim_hash"
 version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "hash_with_seed",
+]
 
 [[package]]
 name = "sstable"
