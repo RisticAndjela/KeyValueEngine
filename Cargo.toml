@@ -6,8 +6,8 @@ authors = ["Andjela Ristic"]
 
 [dependencies]
 hash_with_seed = { path = "help_structures/hash_with_seed" }
-bloom_filter={path = "probabilistic_type_operations/bloom_filter" }
+bloom_filter={path = "probabilistic_structures/bloom_filter" }
 cache={path = "structures/cache"}
 
 [workspace]
-members = [ "probabilistic_type_operations/count_min_sketch", "probabilistic_type_operations/hyper_log_log", "probabilistic_type_operations/sim_hash","structures/*"]
+members = [ "help_structures/memtable_element","probabilistic_structures/count_min_sketch", "probabilistic_structures/hyper_log_log", "probabilistic_structures/sim_hash", "probabilistic_structures/skip_list","structures/*"]

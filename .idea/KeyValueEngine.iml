@@ -7,24 +7,26 @@
       <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/bloom_filter/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/cache/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/lsm_tables/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/memtable/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/sstable/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/structures/write_ahead_log/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/count_min_sketch/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/deserialization/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/hyper_log_log/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/serialization/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/probabilistic_type_operations/sim_hash/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/bloom_filter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/count_min_sketch/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/deserialization/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/hyper_log_log/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/serialization/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/sim_hash/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/skip_list/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/help_structures/memtable_element/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/target" />
-      <excludeFolder url="file://$MODULE_DIR$/probabilistic_type_operations/bloom_filter/target" />
       <excludeFolder url="file://$MODULE_DIR$/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/target" />
+      <excludeFolder url="file://$MODULE_DIR$/probabilistic_structures/bloom_filter/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
