@@ -10,4 +10,4 @@ bloom_filter={path = "probabilistic_structures/bloom_filter" }
 cache={path = "structures/cache"}
 
 [workspace]
-members = [ "help_structures/memtable_element","probabilistic_structures/count_min_sketch", "probabilistic_structures/hyper_log_log", "probabilistic_structures/sim_hash", "probabilistic_structures/skip_list","structures/*"]
+members = ["help_structures/entry_element","probabilistic_structures/count_min_sketch", "probabilistic_structures/hyper_log_log", "probabilistic_structures/sim_hash", "probabilistic_structures/skip_list","structures/*"]

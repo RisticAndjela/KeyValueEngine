@@ -1,147 +1,114 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
-use byteorder::{BigEndian, ReadBytesExt};
-use memtable_element::memtable_element::{CRC_LEN, ElementMemtable, KEY_SIZE_LEN, TIMESTAMP_LEN, TOMBSTONE_LEN, VALUE_SIZE_LEN};
+use std::fs::{File};
+use std::fs;
+use std::ops::Add;
+use memtable_element::entry_element::{EntryElement};
+use std::io::{ Seek, SeekFrom, Write};
 
 pub struct WriteAheadLog {
-    pub filename: String,
-    pub segment_length: u64,
-    pub current_offset: u64,
+    pub filename: String, // latest used wal file
+    pub segment_length: u64, // we can predefine this but all segments will be same length
+    pub current_size: u64, // we need to know how many elements or parts of the elements? can fit more
+    pub current_offset:u64, // we need to be able to read elements one by one
 }
 
 impl WriteAheadLog {
-    pub fn read_overflow(&mut self, data: &mut [u8], index_offset: usize) -> Vec<u8> {
-        let mut new_file = OpenOptions::new().read(true).open(&self.filename).unwrap();
-        new_file.seek(SeekFrom::Start(self.current_offset)).unwrap();
-        let bytes_read = new_file.read(&mut data[index_offset..]).unwrap();
-        new_file.sync_all().unwrap();
-        self.current_offset += bytes_read as u64;
-        data.to_vec()
+    pub fn new( segment_length:u64)->Self{
+        let wal=WriteAheadLog{filename:get_name(1),segment_length,current_size:0,current_offset:0};
+        let _file = File::create(&wal.filename);
+        wal
     }
-
-    pub fn read_next(&mut self, file: &mut File) -> (Vec<u8>, bool) {
-        let mut file_changed = false;
-        let mut all_bytes = Vec::new();
-
-        let mut crc_bytes = vec![0u8; CRC_LEN];
-        let bytes_read = file.read(&mut crc_bytes).unwrap();
-        if bytes_read == 0 {
-            return (vec![], false);
-        }
-        self.current_offset += bytes_read as u64;
-        if bytes_read != CRC_LEN {
-            file_changed = true;
-            self.current_offset = 0;
-            crc_bytes = self.read_overflow(&mut crc_bytes, bytes_read);
-        }
-        all_bytes.extend(crc_bytes);
-
-        let mut timestamp_bytes = vec![0u8; TIMESTAMP_LEN];
-        let bytes_read = file.read(&mut timestamp_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != TIMESTAMP_LEN {
-            file_changed = true;
-            self.current_offset = 0;
-            timestamp_bytes = self.read_overflow(&mut timestamp_bytes, bytes_read);
-        }
-        all_bytes.extend(timestamp_bytes);
-
-        let mut tombstone_bytes = vec![0u8; TOMBSTONE_LEN];
-        let bytes_read = file.read(&mut tombstone_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != TOMBSTONE_LEN {
-            file_changed = true;
-            self.current_offset = 0;
-            tombstone_bytes = self.read_overflow(&mut tombstone_bytes, bytes_read);
-        }
-        all_bytes.extend(tombstone_bytes);
-
-        let mut key_size_bytes = vec![0u8; KEY_SIZE_LEN];
-        let bytes_read = file.read(&mut key_size_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != KEY_SIZE_LEN {
-            file_changed = true;
-            self.current_offset = 0;
-            key_size_bytes = self.read_overflow(&mut key_size_bytes, bytes_read);
-        }
-        all_bytes.extend(key_size_bytes.clone());
-
-        let mut value_size_bytes = vec![0u8; VALUE_SIZE_LEN];
-        let bytes_read = file.read(&mut value_size_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != VALUE_SIZE_LEN {
-            file_changed = true;
-            self.current_offset = 0;
-            value_size_bytes = self.read_overflow(&mut value_size_bytes, bytes_read);
-        }
-        all_bytes.extend(value_size_bytes.clone());
-
-        let key_length = (&key_size_bytes[..]).read_u64::<BigEndian>().unwrap();
-        let mut key_bytes = vec![0u8; key_length as usize];
-        let bytes_read = file.read(&mut key_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != key_length as usize {
-            file_changed = true;
-            self.current_offset = 0;
-            key_bytes = self.read_overflow(&mut key_bytes, bytes_read);
-        }
-        all_bytes.extend(key_bytes);
-
-        let value_length = (&value_size_bytes[..]).read_u64::<BigEndian>().unwrap();
-        let mut value_bytes = vec![0u8; value_length as usize];
-        let bytes_read = file.read(&mut value_bytes).unwrap();
-        self.current_offset += bytes_read as u64;
-        if bytes_read != value_length as usize {
-            file_changed = true;
-            self.current_offset = 0;
-            value_bytes = self.read_overflow(&mut value_bytes, bytes_read);
-        }
-        all_bytes.extend(value_bytes);
-
-        (all_bytes, file_changed)
+    pub fn get_current_index(&self,filename:String)->i32{
+        filename.as_str().split('_').last().and_then(|s| s.split('.').next()).and_then(|s| s.parse::<i32>().ok()).unwrap()
     }
-
-    pub fn append(&mut self, elem: &ElementMemtable) -> std::io::Result<()> {
-        let serialized = elem.serialize();
-        let serialized_len = serialized.len() as u64;
-
-        if self.current_offset + serialized_len >= self.segment_length {
-            self.current_offset = 0;
-        }
-
-        let mut file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&self.filename)?;
-
-        file.write_all(&serialized)?;
-        file.sync_all()?;
-
-        self.current_offset += serialized_len;
-        Ok(())
+    pub fn add_new_file(&mut self){
+        // filename is wal_0001 or like wal_0213 probably not that long but needs to be taken in consideration
+        let mut index =self.get_current_index(self.filename.clone());
+        index+=1;
+        let new_filename=get_name(index);
+        self.filename=new_filename;
+        self.current_size=0;
+        self.current_offset=0;
+        File::create(&self.filename).expect("cannot create");
     }
-
-    pub fn iter(&mut self) -> impl Iterator<Item = ElementMemtable> + '_ {
-        let mut file = OpenOptions::new()
+    pub fn add_element(&mut self, element: &EntryElement){
+        let binding = self.get_all_files();
+        let last_file=binding.last().unwrap();
+        self.filename=last_file.clone();
+        self.current_size=fs::metadata(last_file.clone()).unwrap().len();
+        let left_space=&self.segment_length-&self.current_size;
+        if element.size()>left_space{
+            self.add_new_file();
+        }
+        let mut file = File::options()
             .read(true)
-            .open(&self.filename)
-            .unwrap();
-        file.seek(SeekFrom::Start(0)).unwrap();
+            .write(true)
+            .open(&self.filename).unwrap();
 
-        std::iter::from_fn(move || {
-            let (bytes, file_changed) = self.read_next(&mut file);
-            if bytes.is_empty() {
-                if file_changed {
-                    file = OpenOptions::new()
-                        .read(true)
-                        .open(&self.filename)
-                        .unwrap();
-                    file.seek(SeekFrom::Start(self.current_offset)).unwrap();
-                } else {
-                    return None;
+        file.seek(SeekFrom::Start(self.current_size)).expect("cannot go to till the end");
+        file.write_all(element.serialize().as_slice()).expect("cannot write");
+
+    }
+    pub fn remove_file(&mut self, index: i32){
+        self.current_offset=0;
+        let mut files=self.get_all_files();
+        if files.len() < index as usize {panic!("out of collection of files")}
+        //remove those who don't need changes
+         for _ in 0..index{
+             files.remove(0);
+         }
+        let removed_file=get_name(index);
+        fs::remove_file(&removed_file).expect("cannot remove");
+
+        // Rename subsequent files
+        let mut current_index = index+1;
+
+        for file in files {
+            current_index -= 1;
+            let one_before_file = get_name(current_index);
+            fs::rename(&file, &one_before_file).expect("TODO: panic message");
+            current_index+=2;
+        }
+
+        let mut self_index = self.get_current_index(self.filename.clone());
+        self_index -= 1;
+        self.filename = get_name(self_index);
+
+    }
+    pub fn get_all_files(&mut self) -> Vec<String> {
+        let mut all = vec![];
+        let current_index = self.get_current_index(self.filename.clone());
+        if current_index == 1 {
+            all.push(get_name(current_index));
+            return all;
+        }
+
+        for entry in fs::read_dir("src/storage").unwrap() {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.is_file() {
+                    let ind = self.get_current_index(path.file_name().unwrap().to_string_lossy().to_string());
+                    all.push(get_name(ind));
                 }
             }
-            Some(ElementMemtable::deserialize(&bytes))
-        })
+        }
+        all
     }
+
+
+}
+
+pub fn get_name(index:i32) -> String {
+    let mut new_filename=String::new().add("src/storage/wal_");
+    match index.to_string().len() {
+        4 => new_filename.push_str(&index.to_string()),
+        3 => { new_filename.push_str("0");
+            new_filename.push_str(&index.to_string()); },
+        2 => { new_filename.push_str("00");
+            new_filename.push_str(&index.to_string()); },
+        1 => { new_filename.push_str("000");
+            new_filename.push_str(&index.to_string()); },
+        _ => {panic!("no more space")}
+    }
+    new_filename.push_str(".txt");
+    return new_filename;
 }

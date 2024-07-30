@@ -1,12 +1,13 @@
-pub mod memtable_element;
+pub mod entry_element;
+mod constants;
 
 #[cfg(test)]
 mod tests {
-    use crate::memtable_element::ElementMemtable;
+    use crate::entry_element::EntryElement;
 
     #[test]
     fn serialization() {
-        let element = ElementMemtable {
+        let element = EntryElement {
             key: "example_key".to_string(),
             value: b"example_value".to_vec(),
             tombstone: false,
@@ -14,7 +15,7 @@ mod tests {
         };
 
         let serialized = element.serialize();
-        let deserialized = ElementMemtable::deserialize(&serialized);
+        let deserialized = EntryElement::deserialize(&serialized);
         assert_eq!(deserialized,element);
     }
 }

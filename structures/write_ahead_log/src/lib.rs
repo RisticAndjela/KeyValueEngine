@@ -1,62 +1,61 @@
+use std::{fs, io};
+
 mod write_ahead_log;
 
 #[cfg(test)]
 mod tests {
-    use memtable_element::memtable_element::ElementMemtable;
+    use std::fs;
+    use std::ops::Add;
+    use std::time::{SystemTime, UNIX_EPOCH};
+    use memtable_element::entry_element::EntryElement;
+    use crate::remove_all;
     use crate::write_ahead_log::WriteAheadLog;
 
     #[test]
-    fn test_append_and_iter() {
-        if std::fs::remove_file("test_log.txt").is_ok() {
-            println!("Removed existing file.");
-        } else {
-            println!("No existing file to remove.");
-        }
-
-        let mut log = WriteAheadLog {
-            filename: "test_log.txt".to_string(),
-            segment_length: 1024,
-            current_offset: 0,
-            // current_index: 0,
-        };
-
-        let elements = vec![
-            ElementMemtable {
-                key: "test_key1".to_string(),
-                value: vec![1, 2, 3, 4],
-                tombstone: false,
-                timestamp: 1624047392,
-            },
-            ElementMemtable {
-                key: "test_key2".to_string(),
-                value: vec![5, 6, 7, 8],
-                tombstone: true,
-                timestamp: 1624047393,
-            },
-            ElementMemtable {
-                key: "test_key3".to_string(),
-                value: vec![9, 10, 11, 12],
-                tombstone: false,
-                timestamp: 1624047394,
-            },
-        ];
-
-        println!("Appending elements:");
-        for elem in &elements {
-            println!("Appending: {:?}", elem);
-            log.append(elem).unwrap();
-        }
-
-        println!("Reading elements:");
-        let mut read_elements = log.iter().collect::<Vec<_>>();
-
-        read_elements.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
-
-        for elem in &read_elements {
-            println!("Read: {:?}", elem);
-        }
-
-        assert_eq!(elements, read_elements);
+    fn indexing(){
+        remove_all().expect("cannot remove all");
+        let mut wal=WriteAheadLog::new(1024);
+        wal.add_new_file();
+        assert_eq!(wal.filename,"src/storage/wal_0002.txt");
+        for _ in 0..8{wal.add_new_file();}
+        let files=wal.get_all_files();
+        let count = fs::read_dir("src/storage").unwrap().filter_map(Result::ok).count();
+        assert_eq!(files.len(),count);
+        wal.remove_file(3);
+        let files_removed_one=wal.get_all_files();
+        assert_eq!(files_removed_one.len(),count-1);
     }
 
+    #[test]
+    fn add(){
+        remove_all().expect("cannot remove all");
+        let mut wal=WriteAheadLog::new(120);
+        let element=EntryElement{key:String::new().add("key1"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element);
+        wal.add_element(&element);
+        wal.add_element(&element);
+        wal.add_element(&element);
+        wal.add_element(&element);
+        wal.add_element(&element);
+        wal.add_element(&element);
+        //one element size is 50B and because one segment can hold 100B i need to have 4 files for 7 elements
+        let count = fs::read_dir("src/storage").unwrap().filter_map(Result::ok).count();
+        assert_eq!(count,4);
+
+    }
+}
+
+
+pub fn remove_all() -> io::Result<()> {
+    let entries = fs::read_dir("src/storage")?;
+
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_file() {
+            fs::remove_file(&path)?;
+        }
+    }
+
+    Ok(())
 }

@@ -20,7 +20,7 @@
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/serialization/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/sim_hash/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/probabilistic_structures/skip_list/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/help_structures/memtable_element/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/help_structures/entry_element/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/Cargo/target" />
       <excludeFolder url="file://$MODULE_DIR$/help_structures/hash_with_seed/hashWithSeed/target" />

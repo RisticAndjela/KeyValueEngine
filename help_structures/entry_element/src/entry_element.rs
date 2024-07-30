@@ -1,29 +1,16 @@
 use crc32fast::Hasher;
 use std::convert::TryInto;
-
-pub const CRC_LEN: usize = 4;
-pub const TIMESTAMP_LEN: usize = 8;
-pub const TOMBSTONE_LEN: usize = 1;
-pub const KEY_SIZE_LEN: usize = 8;
-pub const VALUE_SIZE_LEN: usize = 8;
-
-pub const CRC_START: usize = 0;
-pub const TIMESTAMP_START: usize = CRC_START + CRC_LEN;
-pub const TOMBSTONE_START: usize = TIMESTAMP_START + TIMESTAMP_LEN;
-pub const KEY_SIZE_START: usize = TOMBSTONE_START + TOMBSTONE_LEN;
-pub const VALUE_SIZE_START: usize = KEY_SIZE_START + KEY_SIZE_LEN;
-pub const KEY_START: usize = VALUE_SIZE_START + VALUE_SIZE_LEN;
-
+use crate::constants::{CRC_LEN, KEY_SIZE_START, KEY_START, TIMESTAMP_START, TOMBSTONE_START, VALUE_SIZE_START};
 #[derive(Debug)]
-pub struct ElementMemtable {
+pub struct EntryElement {
     pub key: String,
     pub value: Vec<u8>,
     pub tombstone: bool,
     pub timestamp: i64,
 }
 
-impl ElementMemtable {
-    pub fn crc32(data: &[u8]) -> u32 {
+impl EntryElement {
+    fn crc32(data: &[u8]) -> u32 {
         let mut hasher = Hasher::new();
         hasher.update(data);
         hasher.finalize()
@@ -57,7 +44,6 @@ impl ElementMemtable {
 
         serialized
     }
-
     pub fn deserialize(bytes: &[u8]) -> Self {
         let crc_bytes = &bytes[..CRC_LEN];
         let rest_bytes = &bytes[CRC_LEN..];
@@ -84,7 +70,7 @@ impl ElementMemtable {
             println!("WARNING! THE VALUE MAY NOT BE VALID!");
         }
 
-        ElementMemtable {
+        EntryElement {
             key: String::from_utf8(key_bytes.to_vec()).unwrap(),
             value: value_bytes.to_vec(),
             tombstone,
@@ -92,18 +78,10 @@ impl ElementMemtable {
         }
     }
     pub fn size(&self) -> u64 {
-        // Calculate the size of each field. The size of a string can be approximated as the length of its bytes.
-        // Add extra bytes for overhead if needed.
-        let key_size = self.key.len();
-        let value_size = self.value.len();
-        let tombstone_size = std::mem::size_of_val(&self.tombstone);
-        let timestamp_size = std::mem::size_of_val(&self.timestamp);
-
-        // Adjust the calculation as needed based on your specific use case
-        (key_size + value_size + tombstone_size + timestamp_size )as u64
+        self.serialize().len() as u64
     }
 }
-impl PartialEq for ElementMemtable {
+impl PartialEq for EntryElement {
     fn eq(&self, other: &Self) -> bool {
         self.key == other.key &&
             self.value == other.value &&

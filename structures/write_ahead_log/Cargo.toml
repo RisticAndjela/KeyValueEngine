@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 byteorder = "1.4"
-memtable_element= {path="../../help_structures/memtable_element"}
+memtable_element= {path= "../../help_structures/entry_element" }
