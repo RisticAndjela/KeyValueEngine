@@ -1,11 +1,10 @@
 // SAVING LIKE THIS:
-// (0B)crc(4B) - (4B)timestamp(20B) - (20B)tombstone(21B)
-//      4B               16B                   1B
-// - (21B)key_size(29B) - (29B)value_size(37B) - (37B)key(nB) - (nB)value(mB)
+// (0B)crc(4B) - (4B)timestamp(12B) - (12B)tombstone(13B)
+//      4B               8B                   1B
+// - (13B)key_size(21B) - (21B)value_size(29B) - (29B)key(nB) - (nB)value(mB)
 //           8B                   8B                   xB            yB
-
 pub const CRC_LEN: usize = 4;
-pub const TIMESTAMP_LEN: usize = 16;
+pub const TIMESTAMP_LEN: usize = 8;
 pub const TOMBSTONE_LEN: usize = 1;
 pub const KEY_SIZE_LEN: usize = 8;
 pub const VALUE_SIZE_LEN: usize = 8;

@@ -1,5 +1,5 @@
 pub mod entry_element;
-mod constants;
+pub mod constants;
 
 #[cfg(test)]
 mod tests {

@@ -21,7 +21,7 @@ impl EntryElement {
         let value_size = self.value.len() as u64;
 
         let timestamp_bytes = self.timestamp.to_be_bytes();
-        let tombstone_byte = if self.tombstone { 255 } else { 0 };
+        let tombstone_byte = if self.tombstone { 1 } else { 0 };
         let key_size_bytes = key_size.to_be_bytes();
         let value_size_bytes = value_size.to_be_bytes();
         let key_bytes = self.key.as_bytes();

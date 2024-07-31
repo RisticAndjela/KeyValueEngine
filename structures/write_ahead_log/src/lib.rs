@@ -4,6 +4,7 @@ mod write_ahead_log;
 
 #[cfg(test)]
 mod tests {
+    use serial_test::serial;
     use std::fs;
     use std::ops::Add;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -12,11 +13,11 @@ mod tests {
     use crate::write_ahead_log::WriteAheadLog;
 
     #[test]
+    #[serial]
     fn indexing(){
-        remove_all().expect("cannot remove all");
-        let mut wal=WriteAheadLog::new(1024);
+        remove_all().expect("cannot remove all in indexing");
+        let mut wal=WriteAheadLog::new(String::new().add("src/storage"),1024);
         wal.add_new_file();
-        assert_eq!(wal.filename,"src/storage/wal_0002.txt");
         for _ in 0..8{wal.add_new_file();}
         let files=wal.get_all_files();
         let count = fs::read_dir("src/storage").unwrap().filter_map(Result::ok).count();
@@ -27,35 +28,59 @@ mod tests {
     }
 
     #[test]
-    fn add(){
-        remove_all().expect("cannot remove all");
-        let mut wal=WriteAheadLog::new(120);
-        let element=EntryElement{key:String::new().add("key1"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
-        wal.add_element(&element);
-        wal.add_element(&element);
-        wal.add_element(&element);
-        wal.add_element(&element);
-        wal.add_element(&element);
-        wal.add_element(&element);
-        wal.add_element(&element);
-        //one element size is 50B and because one segment can hold 100B i need to have 4 files for 7 elements
+    #[serial]
+    fn add_and_read_at_certain_position(){
+        remove_all().expect("cannot remove all in add and read");
+        let mut wal=WriteAheadLog::new("src/storage".to_string(),120);
+        let element1=EntryElement{key:String::new().add("key1"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element1);
+        let element2=EntryElement{key:String::new().add("key2"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element2);
+        let element3=EntryElement{key:String::new().add("key3"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element3);
+        let element4=EntryElement{key:String::new().add("key4"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element4);
+        let element5=EntryElement{key:String::new().add("key5"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element5);
+        let element6=EntryElement{key:String::new().add("key6"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element6);
+        let element7=EntryElement{key:String::new().add("key7"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        wal.add_element(&element7);
+        //one element size is 50B and because one segment can hold 100B I need to have 4 files for 7 elements
         let count = fs::read_dir("src/storage").unwrap().filter_map(Result::ok).count();
         assert_eq!(count,4);
 
+        let read_element=wal.read_element_at("src/storage/wal_0001.txt",0);
+        assert_eq!(read_element.unwrap(),element1);
+
+        for _ in 0..9{
+            let entry=wal.read_where_stopped();
+            println!("seek to :{}",wal.offset);
+            println!("{:?}",entry);
+        }
+        wal.add_element(&element5);
+        for _ in 0..9{
+            let entry=wal.read_where_stopped();
+            println!("seek to :{}",wal.offset);
+            println!("{:?}",entry);
+        }
     }
 }
 
 
 pub fn remove_all() -> io::Result<()> {
-    let entries = fs::read_dir("src/storage")?;
-
-    for entry in entries {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_file() {
-            fs::remove_file(&path)?;
+    if let Ok(entries) = fs::read_dir("src/storage") {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.is_file() {
+                    if path.exists() {
+                        fs::remove_file(&path)?;
+                    }
+                }
+            }
         }
     }
-
     Ok(())
 }
+
