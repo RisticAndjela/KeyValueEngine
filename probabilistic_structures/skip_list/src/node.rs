@@ -3,61 +3,63 @@ use std::ops::Deref;
 
 pub struct Node {
     pub key: i32,
-    pub value: i32,
+    pub value: Vec<u8>,
     pub next: Option<Box<Node>>,
     pub down: Option<Box<Node>>
 }
 
 impl Node {
-    pub fn new(key: i32, value: i32) -> Self {
+    pub fn new(value: Vec<u8>, key: i32) -> Self {
         Node {
-            key,
             value,
+            key,
             next: None,
             down: None,
         }
     }
-    pub fn reattach_next(&mut self, attach_node: &mut Node){
-        if self.next!=None{
-            let next_node=self.next.clone().unwrap().deref().clone();
-            attach_node.next=Option::from(Box::new(next_node));
+    pub fn reattach_next(&mut self, attach_node: &mut Node) {
+        if self.next != None {
+            let next_node = self.next.clone().unwrap().deref().clone();
+            attach_node.next = Option::from(Box::new(next_node));
         }
-        self.next=Option::from(Box::new(attach_node.clone()));
+        self.next = Option::from(Box::new(attach_node.clone()));
     }
-    pub fn get_all_levels(&mut self)->Vec<Node>{
-        let mut all=vec![self.clone()];
-        let mut last_down=self.clone();
-        loop{
-            if last_down.down==None{break;}
-            last_down=last_down.down.unwrap().deref().clone();
+    pub fn get_all_levels(&mut self) -> Vec<Node> {
+        let mut all = vec![self.clone()];
+        let mut last_down = self.clone();
+        loop {
+            if last_down.down == None { break; }
+            last_down = last_down.down.unwrap().deref().clone();
             all.push(last_down.clone());
         }
         return all;
     }
-    pub fn reconnect(&mut self, new_downs_from:Node){
-        let mut all_new_nexts:Vec<Option<Box<Node>>>=vec![];
-        let mut self_next =self.clone();
-        let mut new_down_next = new_downs_from.clone();
+    pub fn reconnect(&mut self, new_downs_from: Node) {
+        let mut all_new_nexts: Vec<Option<Box<Node>>> = vec![];
+        let mut self_next = self.clone();
+        let mut new_down_next = Option::from(Box::new(new_downs_from.clone()));
         loop {
-            if self_next.value== new_down_next.value{
+            if self_next.key == new_down_next.clone().unwrap().key {
                 //reconnect downs
-                self_next.down= Option::from(Box::new(new_down_next.clone()));
+                self_next.down = new_down_next.clone();
                 all_new_nexts.push(Option::from(Box::new(self_next.clone())));
-                self_next=self_next.next.unwrap().deref().clone();
-            }
-            else {
+                self_next = self_next.next.unwrap().deref().clone();
+                new_down_next=new_down_next.unwrap().next;
+            } else {
                 //move new down because ideally "down row" has more elements than this one
-                new_down_next= new_down_next.next.clone().unwrap().deref().clone();
+                if new_down_next.clone().unwrap().next.is_some(){
+                    new_down_next = new_down_next.clone().unwrap().next;
+                }
+
             }
-            if self_next.next.is_none(){break}
+            if self_next.next.is_none() { break }
         }
         all_new_nexts.push(Option::from(Box::new(self_next.clone())));
-        let latest= reattach_all_nexts_from_vector(all_new_nexts);
-        self.next= latest.clone().next;
-        self.down= latest.clone().down;
+        let latest = reattach_all_nexts_from_vector(all_new_nexts);
+        self.next = latest.clone().next;
+        self.down = latest.clone().down;
     }
 }
-
 pub fn reattach_all_nexts_from_vector(mut all_new_nexts: Vec<Option<Box<Node>>>) -> Node{
     if all_new_nexts.len()==1{return all_new_nexts.first().unwrap().clone().unwrap().deref().clone()}
     all_new_nexts.reverse();
@@ -73,8 +75,8 @@ pub fn reattach_all_nexts_from_vector(mut all_new_nexts: Vec<Option<Box<Node>>>)
 impl Clone for Node {
     fn clone(&self) -> Self {
         Node {
+            value: self.value.clone(),
             key: self.key,
-            value: self.value,
             next: self.next.clone(),
             down: self.down.clone()
         }
@@ -83,20 +85,28 @@ impl Clone for Node {
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
-        self.key == other.key && self.value == other.value
+        self.value == other.value && self.key == other.key
     }
 }
 
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(f, "Node {{ key: {}, value: {}, NEXT: {:?} }}", self.key, self.value, self.next)
-        write!(f, "Node {{ key: {}, value: {}, NEXT: {:?},DOWN:{:?} }}", self.key, self.value, self.next,self.down)
+        write!(f, "Node {{ key: {}, NEXT: {:?},DOWN:{:?} }}", self.key, self.next,self.down)
     }
 }
+pub fn print_node(node:Node){
+    let mut current = Some(Box::new(node.clone()));
+    while let Some(current_node) = current {
+        let next_key = current_node.next.as_ref().map_or("none".to_string(), |next| next.key.to_string());
+        let down_key = current_node.down.as_ref().map_or("none".to_string(), |down| down.key.to_string());
+        println!("key: {} next key: {} down key: {}", current_node.key, next_key, down_key);
 
-// pub fn print_all(mut node: Node){
-//     for (i,node) in node.get_all_levels().iter().enumerate(){
-//         println!("LEVEL {}",i);
-//         println!("{:?}",node);
-//     }
-// }
+        if let Some(down_node) = &current_node.down {
+            let down_next_key = down_node.next.as_ref().map_or("none".to_string(), |next| next.key.to_string());
+            let down_down_key = down_node.down.as_ref().map_or("none".to_string(), |down| down.key.to_string());
+            println!("\t\t\t\t\t\tDOWN key: {} DOWN next key: {} DOWN down key: {}", down_node.key, down_next_key, down_down_key);
+        }
+
+        current = current_node.next.clone();
+    }
+}

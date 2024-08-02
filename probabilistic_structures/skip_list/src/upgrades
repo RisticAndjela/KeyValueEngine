@@ -1,0 +1,17 @@
+WHAT WOULD I LIKE TO DO, but need approval or consult
+1. Uniqueness of Levels:
+    Implement a check to ensure that levels are unique before adding them.
+    This needs to be done carefully, as the first value can only be added once,
+    given that there are no levels that are duplicated.
+    I applied this logic only in the remove element function,
+    but I am now reconsidering if it's the right decision.
+2. Value Representation:
+    Currently, the value is a Vec<u8> representing a string in bytes.
+    I would like to change this to an entry element from the hel structures,
+    allowing for both logical and physical deletion.
+
+QUESTIONS
+1. Bounds Handling:
+    Currently, the first and last elements act as bounds.
+    This means you cannot add keys beyond their existence or remove
+    values associated with those keys. Should this behavior be changed?
