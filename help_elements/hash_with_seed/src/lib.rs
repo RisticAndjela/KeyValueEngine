@@ -1,5 +1,6 @@
 extern crate core;
 mod hash_with_seed;
+
 pub use hash_with_seed::{Hash, create_hash_funcs};
 #[cfg(test)]
 mod tests{

@@ -1,5 +1,6 @@
 use std::ops::Deref;
-use hash_with_seed::Hash;
+use crate::merkle_tree::{combine_values};
+
 #[derive(Clone,Debug)]
 pub enum Step {
     Left,
@@ -8,7 +9,7 @@ pub enum Step {
 
 #[derive(Clone, Debug)]
 pub struct Node {
-    pub value: i64, //if needed better debug value:i64
+    pub value: Vec<u8>, //for debug used i64
     pub left: Option<Box<Node>>,
     pub right: Option<Box<Node>>,
     pub some_child_empty:bool,
@@ -16,13 +17,13 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new_combined_node(left: Node, right: Node, hash_function: &Hash) -> Self {
+    pub fn new_combined_node(left: Node, right: Node) -> Self {
        let mut has_empty= false;
         if left.some_child_empty || right.some_child_empty{has_empty=true;}
-        Node { value: combine_values(left.value.clone(), right.value.clone()), left: Some(Box::new(left.clone())), right: Some(Box::new(right)),some_child_empty:has_empty,height:left.clone().height+1 }
+        Node { value: combine_values(left.value.clone().as_slice(), right.value.clone().as_slice()), left: Some(Box::new(left.clone())), right: Some(Box::new(right)),some_child_empty:has_empty,height:left.clone().height+1 }
     }
     pub fn new_empty(height:i64) -> Self {
-        Node { value: 0, left: None, right: None,some_child_empty:true ,height}
+        Node { value: vec![0u8,1], left: None, right: None,some_child_empty:true ,height}
     }
     pub fn make_empty_chain(height: i64) -> Node {
         if height == 0 {
@@ -67,7 +68,7 @@ impl Node {
         leaves
     }
     pub fn is_empty(&self)->bool{
-        self.value==0
+        self.value==vec![0u8,1]
     }
     pub fn is_leaf(&self)->bool{self.height==0}
     pub fn get_path_to_empty(&self) -> Vec<Step> {
@@ -89,15 +90,4 @@ impl Node {
         steps
     }
 
-}
-pub fn combine_values(num1: i64, num2: i64) -> i64 {
-    // Convert both numbers to strings
-    let str1 = num1.to_string();
-    let str2 = num2.to_string();
-
-    // Concatenate the strings
-    let concatenated_str = format!("{}{}", str1, str2);
-
-    // Convert the concatenated string back to u32
-    concatenated_str.parse::<i64>().unwrap_or(0)
 }
