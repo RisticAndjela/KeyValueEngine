@@ -1,6 +1,6 @@
 /target
 structures/write_ahead_log/src/storage
-help_structures/hash_with_seed/src/upgrades
+help_elements/hash_with_seed/src/upgrades
 probabilistic_structures/skip_list/src/upgrades
 probabilistic_structures/sim_hash/src/upgrades
 structures/write_ahead_log/src/upgardes

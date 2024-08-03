@@ -6,7 +6,7 @@ use crate::node::{Node, print_node};
 pub const ODDS_OF_FLIPS: i32 =50; //right now its 80 percent chance that it will be yes and 20 percent for no
 pub struct SkipList {
     pub first_node: Node,
-    pub base: Node, // first-last only, no other downs or nexts
+    pub base: Node, // first-last only, no other downs or nexts, just to simplify adding blank levels
 }
 
 impl SkipList {
@@ -125,7 +125,7 @@ impl SkipList {
 
         }
     }
-    //it also removes copies of same levels because it can happen to delete a node and reveal same levels
+    //it also removes copies of same levels because it can happen to delete a node and leave same levels
     pub fn remove(&mut self, key: i32) {
         while self.search(key).0 {
             let levels = self.get_all_levels();

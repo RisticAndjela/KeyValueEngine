@@ -1,7 +1,7 @@
 use md5::{Digest, Md5};
 use byteorder::{ByteOrder, BigEndian, WriteBytesExt};
 use std::time::{SystemTime, UNIX_EPOCH};
-
+#[derive(Clone)]
 pub struct Hash {
     pub seed: Vec<u8>,
 }
@@ -17,7 +17,7 @@ impl Hash {
         &self.seed
     }
     pub fn deserialize_seed(data: &[u8]) -> Hash {
-        let mut seed =  vec![0u8;64];
+        let mut seed =  vec![0u8;32];
         seed.copy_from_slice(data);
         Hash { seed }
     }
