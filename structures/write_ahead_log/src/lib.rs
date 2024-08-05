@@ -8,7 +8,7 @@ mod tests {
     use std::fs;
     use std::ops::Add;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use memtable_element::entry_element::EntryElement;
+    use entry_element::entry_element::EntryElement;
     use crate::remove_all;
     use crate::write_ahead_log::WriteAheadLog;
 
@@ -32,19 +32,19 @@ mod tests {
     fn add_and_read_at_certain_position(){
         remove_all().expect("cannot remove all in add and read");
         let mut wal=WriteAheadLog::new("src/storage".to_string(),120);
-        let element1=EntryElement{key:String::new().add("key1"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element1=EntryElement::new("key1".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element1);
-        let element2=EntryElement{key:String::new().add("key2"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element2=EntryElement::new("key2".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element2);
-        let element3=EntryElement{key:String::new().add("key3"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element3=EntryElement::new("key3".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element3);
-        let element4=EntryElement{key:String::new().add("key4"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element4=EntryElement::new("key4".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element4);
-        let element5=EntryElement{key:String::new().add("key5"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element5=EntryElement::new("key5".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element5);
-        let element6=EntryElement{key:String::new().add("key6"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element6=EntryElement::new("key6".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element6);
-        let element7=EntryElement{key:String::new().add("key7"),value:"hi hello whats up".as_bytes().to_vec(),tombstone:false,timestamp:SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 };
+        let element7=EntryElement::new("key7".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element7);
         //one element size is 50B and because one segment can hold 100B I need to have 4 files for 7 elements
         let count = fs::read_dir("src/storage").unwrap().filter_map(Result::ok).count();

@@ -1,8 +1,8 @@
 use std::fs::{File};
 use std::{fs, io};
 use std::ops::Add;
-use memtable_element::entry_element::{EntryElement};
-use memtable_element::constants::{CONST_LEN_OF_ENTRY, KEY_SIZE_START, VALUE_SIZE_START};
+use entry_element::entry_element::{EntryElement};
+use entry_element::constants::{CONST_LEN_OF_ENTRY, KEY_SIZE_START, VALUE_SIZE_START};
 use std::io::{Read, Seek, SeekFrom, Write};
 
 pub struct WriteAheadLog {

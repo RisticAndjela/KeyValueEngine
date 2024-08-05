@@ -1,5 +1,6 @@
 use std::ops::Deref;
 use rand::Rng;
+use entry_element::entry_element::{EntryElement,extract};
 use crate::node;
 use crate::node::{Node, print_node};
 
@@ -44,14 +45,16 @@ impl SkipList {
         }
         counter
     }
-    pub fn add(&mut self, value: Vec<u8>, key: i32) {
-        if self.first_node.key > key || self.clone().base.next.unwrap().key < key{
-            return; // some error perhaps
-        }
+    pub fn add(&mut self, value: EntryElement) {
+        let key=extract(value.key.clone().as_str());
+        if key.is_none(){panic!("bad key value")}
+        if self.first_node.value.clone().extract_number_from_key().unwrap() > key.unwrap().clone() ||
+            self.clone().base.next.unwrap().value.clone().extract_number_from_key().unwrap() < key.unwrap().clone(){
+            panic!("cannot add out of bounds")        }
         let mut levels = self.get_all_levels();
         let number_of_shows = self.num_of_flips(levels.len() as i32) as usize;
         levels = self.get_all_levels(); //reload
-        levels.reverse(); // so that the first in list is the one with all keys
+        levels.reverse(); // so that the first in list is the one with all value.keys
         let mut unchanged: Vec<Node>=vec![];
         if number_of_shows+1<levels.len(){
             unchanged= levels[number_of_shows+1..].to_vec();
@@ -66,9 +69,9 @@ impl SkipList {
                 if current.next.is_none() {
                     return; // out of bounds of last element
                 }
-                if current.clone().next.unwrap().deref().key > key {
+                if current.clone().next.unwrap().deref().value.clone().extract_number_from_key().unwrap() > key.unwrap() {
                     // found spot, we had check before to see if it goes before first
-                    let mut new_node = Node::new(value.clone(), key);
+                    let mut new_node = Node::new(value.clone());
                     current.reattach_next(&mut new_node);
                     let mut need_more=current.clone();
                     'rest:loop{
@@ -102,18 +105,19 @@ impl SkipList {
         }
 
     }
-    pub fn search(&mut self,key:i32)->(bool,Vec<u8>){
-        let not_found=(false,vec![]);
+    pub fn search(&mut self, key_attribute:String) ->(bool, EntryElement){
+        let key=extract(key_attribute.clone().as_str());
+        let not_found=(false,EntryElement::empty());
         let mut current=self.first_node.clone();
         loop{
-            let curr=current.key;
-            if curr==key{
+            let curr=current.value.clone().key;
+            if curr.eq(&key_attribute){
                 return (true,current.value)
             }
             //case 1: if its smaller -> go next
             //case 2: go down
             if current.clone().next.is_some(){
-                if current.clone().next.unwrap().key>key{
+                if current.clone().next.unwrap().clone().value.extract_number_from_key().unwrap()>key.unwrap(){
                     if current.down.is_none(){return not_found}
                     current=current.clone().down.unwrap().deref().clone();
                 }
@@ -126,8 +130,9 @@ impl SkipList {
         }
     }
     //it also removes copies of same levels because it can happen to delete a node and leave same levels
-    pub fn remove(&mut self, key: i32) {
-        while self.search(key).0 {
+    pub fn remove(&mut self, key_attribute: String) {
+        let key=extract(key_attribute.clone().as_str());
+        while self.search(key_attribute.clone()).0 {
             let levels = self.get_all_levels();
             let mut final_levels: Vec<Node> = vec![];
 
@@ -135,7 +140,7 @@ impl SkipList {
                 let mut current = first_in_level.clone();
                 let mut all_in_row: Vec<Option<Box<Node>>> = vec![];
                 loop {
-                    if current.key != key {
+                    if current.value.clone().extract_number_from_key().unwrap() != key.clone().unwrap() {
                         all_in_row.push(Some(Box::new(current.clone())));
                     }
                     if let Some(next_node) = current.next.clone() {

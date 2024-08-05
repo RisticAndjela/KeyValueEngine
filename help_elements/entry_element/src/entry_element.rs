@@ -1,21 +1,23 @@
 use crc32fast::Hasher;
 use std::convert::TryInto;
 use crate::constants::{CRC_LEN, KEY_SIZE_START, KEY_START, TIMESTAMP_START, TOMBSTONE_START, VALUE_SIZE_START};
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct EntryElement {
     pub key: String,
     pub value: Vec<u8>,
-    pub tombstone: bool,
+    pub tombstone: bool, //true is deleted
     pub timestamp: i64,
 }
 
 impl EntryElement {
+    pub fn new(key:String,value:Vec<u8>,timestamp:i64)->Self{EntryElement{key,value,tombstone:false,timestamp}}
+    pub fn empty()->Self{EntryElement{key:"".to_string(),value:vec![],tombstone:true,timestamp:0}}
+    pub fn is_irrelevant(&self) ->bool{self.key=="".to_string() && self.value==vec![]&& self.tombstone==true}
     fn crc32(data: &[u8]) -> u32 {
         let mut hasher = Hasher::new();
         hasher.update(data);
         hasher.finalize()
     }
-
     pub fn serialize(&self) -> Vec<u8> {
         let key_size = self.key.len() as u64;
         let value_size = self.value.len() as u64;
@@ -80,6 +82,10 @@ impl EntryElement {
     pub fn size(&self) -> u64 {
         self.serialize().len() as u64
     }
+    pub fn extract_number_from_key(&self) -> Option<i64> {
+        let key= self.key.as_str();
+        extract(key)
+    }
 }
 impl PartialEq for EntryElement {
     fn eq(&self, other: &Self) -> bool {
@@ -87,5 +93,18 @@ impl PartialEq for EntryElement {
             self.value == other.value &&
             self.tombstone == other.tombstone &&
             self.timestamp == other.timestamp
+    }
+}
+
+pub fn extract(key:&str) -> Option<i64> {
+    let prefix = "key";
+    if key.starts_with(prefix) {
+        let number_part = &key[prefix.len()..];
+        match number_part.parse::<i64>() {
+            Ok(number) => Some(number),
+            Err(_) => None,
+        }
+    } else {
+        None
     }
 }

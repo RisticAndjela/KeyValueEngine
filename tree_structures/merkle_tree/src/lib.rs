@@ -74,6 +74,7 @@ mod tests {
         let serialized = serialize_tree(&tree);
         let deserialized_tree = deserialize_tree(&serialized);
 
-        assert_eq!(tree.root.unwrap().value, deserialized_tree.root.unwrap().value);
+        assert_eq!(tree.root.clone().unwrap().value, deserialized_tree.root.unwrap().value);
+        assert_eq!(tree.root.clone().unwrap().right.unwrap().value,vec![4, 5, 6]);
     }
 }

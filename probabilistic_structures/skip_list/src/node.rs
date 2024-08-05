@@ -1,18 +1,16 @@
 use std::fmt;
 use std::ops::Deref;
-
+use entry_element::entry_element::EntryElement;
 pub struct Node {
-    pub key: i32,
-    pub value: Vec<u8>,
+    pub value: EntryElement,
     pub next: Option<Box<Node>>,
     pub down: Option<Box<Node>>
 }
 
 impl Node {
-    pub fn new(value: Vec<u8>, key: i32) -> Self {
+    pub fn new(value: EntryElement) -> Self {
         Node {
             value,
-            key,
             next: None,
             down: None,
         }
@@ -39,7 +37,7 @@ impl Node {
         let mut self_next = self.clone();
         let mut new_down_next = Option::from(Box::new(new_downs_from.clone()));
         loop {
-            if self_next.key == new_down_next.clone().unwrap().key {
+            if self_next.value.key == new_down_next.clone().unwrap().value.key {
                 //reconnect downs
                 self_next.down = new_down_next.clone();
                 all_new_nexts.push(Option::from(Box::new(self_next.clone())));
@@ -76,7 +74,6 @@ impl Clone for Node {
     fn clone(&self) -> Self {
         Node {
             value: self.value.clone(),
-            key: self.key,
             next: self.next.clone(),
             down: self.down.clone()
         }
@@ -85,26 +82,26 @@ impl Clone for Node {
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value && self.key == other.key
+        self.value == other.value
     }
 }
 
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Node {{ key: {}, NEXT: {:?},DOWN:{:?} }}", self.key, self.next,self.down)
+        write!(f, "Node {{ key: {}, NEXT: {:?},DOWN:{:?} }}", self.value.key, self.next,self.down)
     }
 }
 pub fn print_node(node:Node){
     let mut current = Some(Box::new(node.clone()));
     while let Some(current_node) = current {
-        let next_key = current_node.next.as_ref().map_or("none".to_string(), |next| next.key.to_string());
-        let down_key = current_node.down.as_ref().map_or("none".to_string(), |down| down.key.to_string());
-        println!("key: {} next key: {} down key: {}", current_node.key, next_key, down_key);
+        let next_key = current_node.next.as_ref().map_or("none".to_string(), |next| next.value.key.to_string());
+        let down_key = current_node.down.as_ref().map_or("none".to_string(), |down| down.value.key.to_string());
+        println!("key: {} next key: {} down key: {}", current_node.value.key, next_key, down_key);
 
         if let Some(down_node) = &current_node.down {
-            let down_next_key = down_node.next.as_ref().map_or("none".to_string(), |next| next.key.to_string());
-            let down_down_key = down_node.down.as_ref().map_or("none".to_string(), |down| down.key.to_string());
-            println!("\t\t\t\t\t\tDOWN key: {} DOWN next key: {} DOWN down key: {}", down_node.key, down_next_key, down_down_key);
+            let down_next_key = down_node.next.as_ref().map_or("none".to_string(), |next| next.value.key.to_string());
+            let down_down_key = down_node.down.as_ref().map_or("none".to_string(), |down| down.value.key.to_string());
+            println!("\t\t\t\t\t\tDOWN key: {} DOWN next key: {} DOWN down key: {}", down_node.value.key, down_next_key, down_down_key);
         }
 
         current = current_node.next.clone();

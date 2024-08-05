@@ -1,5 +1,5 @@
 [package]
-name = "memtable_element"
+name = "entry_element"
 version = "0.1.0"
 edition = "2021"
 
