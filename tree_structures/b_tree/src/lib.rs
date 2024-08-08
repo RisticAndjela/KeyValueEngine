@@ -4,7 +4,7 @@ use crate::node::Node;
 
 mod b_tree;
 mod node;
-mod file;
+mod add_new_level_impl;
 
 #[cfg(test)]
 mod tests {
@@ -13,16 +13,7 @@ mod tests {
     use entry_element::entry_element::EntryElement;
     use crate::{get_full_node, get_some_node, get_some_shorter_node};
     use crate::node::Node;
-    #[test]
-    fn test_node_initializer() {
-        let mut node = Node::initialize_new( 9);
-        node.add_to_k_empty_children_and_elements( 6 * 2 - 1);
-        assert_eq!(node.elements.len(), 6 * 2 - 1);
-        assert_eq!(node.children.len(), 6 * 2);
-        assert_eq!(node.num_of_relative_children(), 12);
-        assert_eq!(node.num_of_relative_elements(), 0);
-        assert_eq!(node.get_max_height(),2);//by initializer
-    }
+
     #[test]
     fn test_node_sorter() {
         let node = get_some_node().sort_all_elements_and_children();
@@ -38,45 +29,40 @@ mod tests {
         assert!(!node1.will_overflow("key8".to_string())); //should not overflow
         let mut node2 = get_some_shorter_node().sort_all_elements_and_children();
         assert!(node2.will_overflow("key8".to_string())); //should overflow
-        assert!(!node2.need_new_level());
+        assert!(!node2.is_current_subtree_filled());
         let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
         let node=Node{elements:vec![entry1],children:vec![]};
-        assert!(node.need_new_level());
+        assert!(node.is_current_subtree_filled());
     }
     #[test]
-    fn test_add_new_level(){
-        let mut node=get_full_node().sort_all_elements_and_children();
-        node=node.clone().add_new_level(3).unwrap().deref().clone();
-        assert!(node.children[0].clone().unwrap().deref().clone().children[0].is_some());
-        assert_eq!(node.children[0].clone().unwrap().deref().clone().elements[0].key,"key1".to_string());//stayed same
-        assert_eq!(node.children[1].clone().unwrap().deref().clone().elements[0].key,"key5".to_string());//stayed same
-        assert!(node.children[4].clone().unwrap().deref().clone().elements[0].is_irrelevant());//added empty elements
-        assert!(node.children[0].clone().unwrap().deref().clone().children[0].is_some())//new node new leaf
-
+    fn test_dealing_with_k_spots(){
+        let mut full_node=get_full_node().sort_all_elements_and_children();
+        full_node.updated_level_space();
+        assert_eq!(full_node.elements.len(),5);
+        assert_eq!(full_node.children.len(),6);
+        assert_eq!(full_node.elements.last().unwrap().key,"key15".to_string());
+        assert_eq!(full_node.elements[3].key,"key14".to_string());
+        assert_eq!(full_node.elements[2].key,"key12".to_string());
+        assert!(full_node.children[3].clone().unwrap().elements[1].is_irrelevant());
+        assert!(full_node.children[3].clone().unwrap().elements[2].is_irrelevant());
+        // full_node.add_new_level(); with this it will panic which it is supposed to happen
+        // full_node.add_empty_children_leaves(); //works but its a private fn now
+        // assert_eq!(full_node.children[0].clone().unwrap().children.len(),6);
+        // assert_eq!(full_node.children[1].clone().unwrap().children.len(),6);
+        // assert_eq!(full_node.children[2].clone().unwrap().children.len(),6);
+        // assert_eq!(full_node.children[3].clone().unwrap().children.len(),6);
+        // assert_eq!(full_node.children[4].clone().unwrap().children.len(),6);
+        // assert_eq!(full_node.children[5].clone().unwrap().children.len(),6);
     }
+
     #[test]
     fn test_add(){
-        let entry8 = EntryElement::new("key8".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry22 = EntryElement::new("key22".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry23 = EntryElement::new("key23".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry24 = EntryElement::new("key24".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry25 = EntryElement::new("key25".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry26 = EntryElement::new("key26".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry27 = EntryElement::new("key27".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry28 = EntryElement::new("key28".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let entry29 = EntryElement::new("key29".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let mut node= get_some_shorter_node().sort_all_elements_and_children();
-        node.add(entry8);
-        node.add(entry22);
-        node.add(entry23);
-        node.add(entry24);
-        node.add(entry25);
-        node.add(entry26);
-        node.add(entry27);
-        node.add(entry28);
-        node.add(entry29);
-        println!("{:?}",node.clone());
+        let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+        let mut node=Node::initialize_new(1);
+        node.add(entry1);
+        println!("{:?}",node);
     }
+
 }
 fn get_some_node() -> Node {
     let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
