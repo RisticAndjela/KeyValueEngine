@@ -57,11 +57,15 @@ mod tests {
 
     #[test]
     fn test_add(){
-        let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let mut node=Node::initialize_new(1);
-        node.add(entry1);
-        println!("{:?}",node);
+        let entry8 = EntryElement::new("key8".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+        let mut node= get_full_node();
+        assert!(node.will_overflow("key8".to_string()));
+        let mut node2=get_some_shorter_node();
+        assert!(node2.will_overflow("key8".to_string()));
+        let mut node3=get_some_node();
+        assert!(!node3.will_overflow("key8".to_string()));
     }
+
 
 }
 fn get_some_node() -> Node {

@@ -2,67 +2,106 @@ use std::ops::Deref;
 use entry_element::entry_element::{EntryElement, extract};
 use crate::node::Node;
 // implementation for insertion
+// lpl = last parent-leaf node in the subtree
  impl Node{
      // IDEA: find the leaf and parent where element should go, this implementation of tree(nodes completion) works based on a fact that only leaves have spots with empty elements
      // when I am adding new level I instantly flush all elements in certain positions so that the leaves have enough space
      // problem here is that I will eventually come to the parts where I cannot borrow anything from anywhere in last parent-leaves tree,
-     // so I will be forced to take it from another last parent-tree, the values can be taken all the way to the roof which makes this complicated while working with large amount of data
+     // so I will be forced to take it from another last parent-leaf, the values can be taken all the way to the roof which makes this complicated while working with large amount of data
      pub fn add(&mut self, element:EntryElement){
-         //search -> none
-         if element.extract_number_from_key().is_none(){ panic!("wrong key structure")}
-         if self.will_overflow(element.key.clone()) {
-             //handle problem
-             if self.is_current_subtree_filled() {
-                 self.updated_level_space();
-                 self.add(element);
-                 return;
-             } else {
-                 // child split
-                 self.handle_overflow(element.clone());
-                 return;
-             }
+         //if I have a filled tree I will need to added it new level
+         if self.is_current_subtree_filled(){
+            self.updated_level_space(); // it will either add new children if I have enough elements by level equation or add spots for empty elements and rearrange tree
          }
-         self.add_normally(element.clone());
-         let sorted=self.sort_all_elements_and_children();
-         self.elements=sorted.elements;
-         self.children=sorted.children;
+         // now I need to see if we are working with 2 level tree or more complex one
+        self.add_with_no_overflow(element.clone());
      }
-     fn add_normally(&mut self, element: EntryElement) -> Node {
-         // If the node is a leaf, add the element and sort the elements
-         if self.is_leaf() {
-             self.elements.push(element);
-             self.sort_elements();
-             for (i,e) in self.elements.clone().iter().enumerate(){
-                 if e.is_irrelevant(){
-                     self.elements.remove(i);
-                     break;
-                 }
-             }
-             return self.clone();
-         }
-         let key = element.extract_number_from_key().unwrap();
-         let mut position = 0;
-         for i in 0..self.elements.len() {
-             let to_compare = self.elements[i].extract_number_from_key();
-             if to_compare.is_none(){
-                 //elements are not full add here but take from someone to full fill
-                 panic!();
-             }
-             if to_compare.unwrap() < key {
-                 position = i + 1;
-             }else{break;}
-         }
-         let child = self.children[position].clone().unwrap();
-         let new_child = child.clone().add_normally(element);
 
-         self.children[position] = Some(Box::new(new_child));
-         self.clone() // return the updated node
-     }
+    fn add_with_no_overflow(&mut self,element:EntryElement){ // self is root -> TRANSFER TO BTREE
+        let key= element.extract_number_from_key().unwrap(); // previously checked if there is wrong key structure, so I can safely unwrap
+        let height= self.get_max_height();
+        if height==1 { // if the node is a leaf, add the element and sort the elements
+            for i in 0..self.elements.clone().len(){
+                if self.elements[i].clone().is_irrelevant(){
+                    self.elements[i]=element.clone();
+                    self.sort_elements();
+                    return;
+                }
+            }
+        }
+        if height==2{ // recursively got to the lpl
+            self.add_with_no_overflow_to_lpl(element.clone());
+            return;
+        }
+        for child_index in 0..self.children.clone().len(){
+            if self.children[child_index].clone().unwrap().elements[0].extract_number_from_key().unwrap()>key{
+                let mut to_replace=self.children[child_index-1].clone().unwrap();
+                to_replace.add_with_no_overflow(element.clone());
+                self.children[child_index-1]=Option::from(to_replace.clone());
+                return;
+            }
+        }
+    }
+    fn add_with_no_overflow_to_lpl(&mut self,element:EntryElement){
+        let key = element.extract_number_from_key().unwrap();
+
+        let mut position = 0;
+        let num_of_elements=self.elements.clone().len();
+        'find_position: for i in 0..=num_of_elements {
+            if i==num_of_elements{position=i;} // it larger than last number in elements
+            let to_compare = self.elements[i].extract_number_from_key();
+            if to_compare.is_none(){ panic!("something is wrong line 51"); }//elements are not full add here but take from someone to fulfill
+            if to_compare.unwrap() > key { position = i; }
+            else{break 'find_position;}
+        }
+
+        let mut child = self.children[position].clone().unwrap().deref().clone();
+        child.elements[num_of_elements]=element.clone();
+        child.sort_elements();
+
+        self.children[position] = Option::from(Box::new(child));
+    }
+    //this means I will have overflow I cannot handle only with lpl I will need to borrow values from other parents
+    fn handle_overflow_on_second_level(&mut self,element:EntryElement){
+        // need to find which element i would be dropping and on which side
+        // if I go left ... I would take from my child THE smallest element and immediately call on drop element
+        // if I go right ... I would take from my child THE largest element and immediately call on drop element
+        // rearrange because of missing spot
+        // then add this element to the right spot
+
+
+    }
+    fn drop_element_for_one_level(&mut self,element: EntryElement,going_left:bool){// self has element in its elements but in first call it doesn't
+        // find where to move
+        let mut key=element.extract_number_from_key().unwrap();
+        let mut position= 0;
+        let height=self.get_max_height();
+        if height==1{panic!("fuck")}//if its 1 I did something bad because I reached leaf
+        if height==2{
+            // I am in zone for lpl
+            self.handle_overflow_in_lpl(element);
+            return
+        }
+        for e in self.elements{
+            position+=1;
+            if e.extract_number_from_key().unwrap()>key{break}
+        }
+        if key>self.elements.last().unwrap().extract_number_from_key().unwrap(){position+1;}
+        let mut child_position=position.clone()+1; // if I go right when I increased position in last line something is wrong
+        if going_left{child_position=position.clone()}
+        let mut his_correct_child =self.children[child_position].clone().unwrap().deref().clone();
+        let element_to_keep_on_dropping=self.elements[position].clone();
+        self.elements[position]=element.clone();
+        his_correct_child.drop_element_for_one_level(element_to_keep_on_dropping,going_left);
+        self.children[child_position]=Some(Box::new(his_correct_child.clone()));
+    }
+    fn is_lpl(&self)->bool{self.children[0].clone().unwrap().is_leaf()} //self = parent, child = leaf
+
 
      // idea is to find the node and element to put, next I need to see which element from all old ones plus new one is the best new parent,
      // when I find new parent I need to delete old one, and add them again looking the direction that the insertion will be fastest,
      // the node I leave as self need to have new value in itself and be sorted
-     fn handle_overflow(&mut self, element: EntryElement) {
+     fn handle_overflow_in_lpl(&mut self, element: EntryElement) {
          let last_index_in_children =self.elements.clone().iter().len();
          let key = element.clone().extract_number_from_key().unwrap();
          let mut element_to_change = EntryElement::empty(); //for now is none
@@ -156,20 +195,15 @@ use crate::node::Node;
          let key= extract(key_attribute.as_str()).unwrap();
          for i in 0..self.elements.clone().len(){
              if self.elements.clone()[i].extract_number_from_key().unwrap()>key{
-                 if self.children[i].clone().unwrap().are_elements_full() {return true; }
+                 if self.children[i].clone().unwrap().is_current_subtree_filled() {return true; }
                  return false;
              }
          }
          let last_child = *self.children.clone().last().unwrap().clone().unwrap();
-         if last_child.clone().are_elements_full() { return true; }
+         if last_child.clone().is_current_subtree_filled() { return true; }
          else{false;}
 
          return false
-     }
-     pub fn are_elements_full(&self)->bool{
-         let used_spots=self.clone().num_of_relative_elements();
-         let max_capacity=self.elements.clone().len();
-         used_spots==max_capacity as i32
      }
      //function that chooses in overflow weather is closer to go left or right, since it's called on 100% leaves there is never going to be situation where I will reach end and not get at least one empty spot
      pub fn choose_direction_left(&self, position:i32)->bool{
