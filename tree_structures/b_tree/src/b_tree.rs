@@ -9,7 +9,7 @@ pub struct BTree{
 impl BTree{
     pub fn new()->Self{BTree{root:Node::initialize_new(2*1-1),height:1}}
     pub fn add(&mut self, element: EntryElement){
-        self.root.add(element);
+        self.root.add(element,true);
         self.height= self.root.get_max_height();
     }
     pub fn search(&mut self, key_attribute:String)->bool{

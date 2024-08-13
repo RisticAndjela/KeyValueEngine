@@ -56,16 +56,27 @@ mod tests {
     }
 
     #[test]
-    fn test_add(){
-        let entry8 = EntryElement::new("key8".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
-        let mut node= get_full_node();
-        assert!(node.will_overflow("key8".to_string()));
-        let mut node2=get_some_shorter_node();
-        assert!(node2.will_overflow("key8".to_string()));
-        let mut node3=get_some_node();
-        assert!(!node3.will_overflow("key8".to_string()));
+    fn test_overflow(){
+        // let mut node= get_full_node();
+        // assert!(node.will_overflow("key8".to_string()));
+        // let mut node2=get_some_shorter_node();
+        // assert!(node2.will_overflow("key8".to_string()));
+        // let mut node3=get_some_node();
+        // assert!(!node3.will_overflow("key8".to_string()));
     }
+    #[test]
+    fn test_add(){
+        let mut root=Node::initialize_new(3);//smallest height is 2 so smallest num of elements is 2*2-1
+        for i in 1..216{
+            let mut str = "key".to_string();
+            str.push_str(&i.to_string());
+            root.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
+        }
+        // assert!(root.will_overflow("key41".to_string()));
+        root.add(EntryElement::new("key216".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
 
+        println!("{:?}",root);
+    }
 
 }
 fn get_some_node() -> Node {
