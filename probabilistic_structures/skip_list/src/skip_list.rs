@@ -5,12 +5,20 @@ use crate::node;
 use crate::node::{Node, print_node};
 
 pub const ODDS_OF_FLIPS: i32 =50; //right now its 80 percent chance that it will be yes and 20 percent for no
+#[derive(Clone, Debug)]
 pub struct SkipList {
     pub first_node: Node,
     pub base: Node, // first-last only, no other downs or nexts, just to simplify adding blank levels
 }
 
 impl SkipList {
+    pub fn make_new(element_min: EntryElement,element_max: EntryElement)->Self{
+        let mut first_node=Node::new(element_min);
+        let last_node=Node::new(element_max);
+        first_node.next=Option::from(Box::new(last_node));
+        first_node.down= Option::from(Box::new(first_node.clone()));
+        SkipList::new(first_node)
+    }
     pub fn new(first_node: Node) -> Self {
         SkipList {
             first_node: first_node.clone(),
@@ -174,11 +182,5 @@ pub fn print_all(mut skip_list: SkipList) {
     for (i, node) in levels.iter().enumerate() {
         println!("LEVEL {}", i);
         print_node(node.clone());
-    }
-}
-
-impl Clone for SkipList{
-    fn clone(&self)->Self{
-        SkipList{first_node:self.first_node.clone(),base:self.base.clone() }
     }
 }

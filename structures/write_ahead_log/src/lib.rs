@@ -9,13 +9,13 @@ mod tests {
     use std::ops::Add;
     use std::time::{SystemTime, UNIX_EPOCH};
     use entry_element::entry_element::EntryElement;
-    use crate::remove_all;
+    use crate::remove_all_files;
     use crate::write_ahead_log::WriteAheadLog;
 
     #[test]
     #[serial]
     fn indexing(){
-        remove_all().expect("cannot remove all in indexing");
+        remove_all_files().expect("cannot remove all in indexing");
         let mut wal=WriteAheadLog::new(String::new().add("src/storage"),1024);
         wal.add_new_file();
         for _ in 0..8{wal.add_new_file();}
@@ -30,7 +30,7 @@ mod tests {
     #[test]
     #[serial]
     fn add_and_read_at_certain_position(){
-        remove_all().expect("cannot remove all in add and read");
+        remove_all_files().expect("cannot remove all in add and read");
         let mut wal=WriteAheadLog::new("src/storage".to_string(),120);
         let element1=EntryElement::new("key1".to_string(),"hi hello whats up".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 );
         wal.add_element(&element1);
@@ -68,7 +68,7 @@ mod tests {
 }
 
 
-pub fn remove_all() -> io::Result<()> {
+pub fn remove_all_files() -> io::Result<()> {
     if let Ok(entries) = fs::read_dir("src/storage") {
         for entry in entries {
             if let Ok(entry) = entry {

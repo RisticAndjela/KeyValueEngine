@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+entry_element={path="../../help_elements/entry_element"}
+skip_list={path="../../probabilistic_structures/skip_list"}

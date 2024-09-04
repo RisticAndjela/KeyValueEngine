@@ -1,7 +1,7 @@
 use crc32fast::Hasher;
 use std::convert::TryInto;
 use crate::constants::{CRC_LEN, KEY_SIZE_START, KEY_START, TIMESTAMP_START, TOMBSTONE_START, VALUE_SIZE_START};
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,PartialEq)]
 pub struct EntryElement {
     pub key: String,
     pub value: Vec<u8>,
@@ -12,7 +12,8 @@ pub struct EntryElement {
 impl EntryElement {
     pub fn new(key:String,value:Vec<u8>,timestamp:i64)->Self{EntryElement{key,value,tombstone:false,timestamp}}
     pub fn empty()->Self{EntryElement{key:"".to_string(),value:vec![],tombstone:true,timestamp:0}}
-    pub fn is_irrelevant(&self) ->bool{self.key=="".to_string() && self.value==vec![]&& self.tombstone==true}
+    pub fn delete(&mut self){ self.tombstone=true; }
+    pub fn is_irrelevant(&self) ->bool{self.key=="".to_string() || self.tombstone==true}
     fn crc32(data: &[u8]) -> u32 {
         let mut hasher = Hasher::new();
         hasher.update(data);
@@ -85,14 +86,6 @@ impl EntryElement {
     pub fn extract_number_from_key(&self) -> Option<i64> {
         let key= self.key.as_str();
         extract(key)
-    }
-}
-impl PartialEq for EntryElement {
-    fn eq(&self, other: &Self) -> bool {
-        self.key == other.key &&
-            self.value == other.value &&
-            self.tombstone == other.tombstone &&
-            self.timestamp == other.timestamp
     }
 }
 

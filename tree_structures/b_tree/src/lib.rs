@@ -5,12 +5,13 @@ use crate::node::Node;
 mod b_tree;
 mod node;
 mod add_new_level_impl;
+mod insertion_impl;
+mod last_insertion;
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use entry_element::entry_element::EntryElement;
+    use entry_element::entry_element::{EntryElement, extract};
     use crate::{get_full_node, get_some_node, get_some_shorter_node};
     use crate::node::Node;
 
@@ -26,9 +27,9 @@ mod tests {
     #[test]
     fn test_will_overflow() {
         let mut node1 = get_some_node().sort_all_elements_and_children();
-        assert!(!node1.will_overflow("key8".to_string())); //should not overflow
+        assert!(!node1.will_do_overflow(extract("key8").unwrap())); //should not overflow
         let mut node2 = get_some_shorter_node().sort_all_elements_and_children();
-        assert!(node2.will_overflow("key8".to_string())); //should overflow
+        assert!(node2.will_do_overflow(extract("key8").unwrap())); //should overflow
         assert!(!node2.is_current_subtree_filled());
         let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
         let node=Node{elements:vec![entry1],children:vec![]};
@@ -67,15 +68,24 @@ mod tests {
     #[test]
     fn test_add(){
         let mut root=Node::initialize_new(3);//smallest height is 2 so smallest num of elements is 2*2-1
-        for i in 1..216{
+        for i in 1..66 {
             let mut str = "key".to_string();
             str.push_str(&i.to_string());
             root.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
         }
-        // assert!(root.will_overflow("key41".to_string()));
-        root.add(EntryElement::new("key216".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
-
+        root.add(EntryElement::new("key66".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
         println!("{:?}",root);
+    }
+    #[test]
+    fn new_child(){
+        let mut root=Node::initialize_new(3);//smallest height is 2 so smallest num of elements is 2*2-1
+        for i in 1..216 {
+            let mut str = "key".to_string();
+            str.push_str(&i.to_string());
+            root.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
+        }
+        root.append_children(root.clone().get_max_height());
+        // for i in root.elements{}
     }
 
 }

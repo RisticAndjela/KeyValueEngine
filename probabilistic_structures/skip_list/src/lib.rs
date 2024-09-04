@@ -1,5 +1,5 @@
 mod node;
-mod skip_list;
+pub mod skip_list;
 #[cfg(test)]
 mod tests {
     use std::ops::Deref;
@@ -52,11 +52,7 @@ mod tests {
         let entry17=EntryElement::new("key17".to_string(),"some value".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
         let entry13=EntryElement::new("key13".to_string(),"some value".as_bytes().to_vec(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
 
-        let mut first_node=Node::new(entry1);
-        let last_node=Node::new(entry20);
-        first_node.next=Option::from(Box::new(last_node));
-        first_node.down= Option::from(Box::new(first_node.clone()));
-        let mut skip_list=SkipList::new(first_node);
+        let mut skip_list=SkipList::make_new(entry1,entry20);
         skip_list.add(entry17);
         skip_list.add(entry13);
         assert_eq!(skip_list.first_node.next.unwrap().deref().clone().value.key,"key20".to_string());
@@ -91,6 +87,8 @@ mod tests {
         skip_list.add(entry28);
         skip_list.add(entry19);
         skip_list.add(entry10);
+        let all=skip_list.get_all_levels();
+        println!("{:?}",all);
         print_all(skip_list.clone());
         assert_eq!(skip_list.search("key27".to_string()).1.value,"some value 27".as_bytes().to_vec());
         assert_eq!(skip_list.search("key6".to_string()).1.value,"some value 6".as_bytes().to_vec());
