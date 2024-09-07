@@ -154,6 +154,6 @@ pub fn get_name(storage_path:String, index:i32) -> String {
             new_filename.push_str(&index.to_string()); },
         _ => {panic!("no more space")}
     }
-    new_filename.push_str(".txt");
+    new_filename.push_str(".bin");
     return new_filename;
 }

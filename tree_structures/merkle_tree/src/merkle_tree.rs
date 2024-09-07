@@ -1,7 +1,5 @@
-use crate::node::Step;
 use std::ops::Deref;
 use md5::{Digest, Md5};
-use crate::merkle_tree;
 use crate::node::Node;
 
 #[derive(Clone, Debug)]
@@ -14,70 +12,13 @@ impl MerkleTree {
         MerkleTree { root: Option::from(Box::new(Node::new_empty(0)))}
     }
     pub fn add(&mut self,value: Vec<u8>){
-        let mut path = self.root.clone().unwrap().get_path_to_empty();
-        let mut all_nodes_on_path=vec![]; //I need this to go recursive through nodes
-        let mut current_node=self.root.clone().unwrap().deref().clone();
-        //loop through path
-        for step in path.clone(){
-            match step {
-                Step::Left => {
-                   current_node = current_node.left.unwrap().deref().clone();
-                }
-                Step::Right => {
-                   current_node = current_node.right.unwrap().deref().clone();
-                }
-            }
-            all_nodes_on_path.push(current_node.clone());
-        }
-        all_nodes_on_path.reverse();
-        path.reverse();
-
-        if all_nodes_on_path.len()==1{
-            let mut root=self.root.clone().unwrap().deref().clone();
-            all_nodes_on_path[0].value=value.clone();
-            if root.left.clone().unwrap().value==vec![0u8,1]{
-                all_nodes_on_path[0].some_child_empty=false;
-                root.left=Option::from(Box::new(all_nodes_on_path[0].clone()));
-                root.value= merkle_tree::combine_values(root.clone().left.unwrap().value.as_slice(), root.clone().right.unwrap().value.as_slice());
-                self.root=Option::from(Box::new(root.clone()));
-                return;
-            }
-            all_nodes_on_path[0].some_child_empty=false;
-            root.right=Option::from(Box::new(all_nodes_on_path[0].clone()));
-            root.some_child_empty=false;
-            root.value= merkle_tree::combine_values(root.clone().left.unwrap().value.as_slice(), root.clone().right.unwrap().value.as_slice());
-            self.root=Option::from(Box::new(root.clone()));
+        let mut root=self.clone().root.unwrap().deref().clone();
+        if root.root_needs_to_double(){
             self.new_root();
-            return;
+            root=self.clone().root.unwrap().deref().clone();
         }
-        all_nodes_on_path.push(self.root.clone().unwrap().deref().clone());
-        all_nodes_on_path[0].value=value.clone();
-        all_nodes_on_path[0].some_child_empty=false;
-        for i in 1..all_nodes_on_path.len(){
-            match path[i-1] {
-                Step::Left => {
-                    all_nodes_on_path[i].left = Option::from(Box::new(all_nodes_on_path[i-1].clone()));
-                    all_nodes_on_path[i].value= merkle_tree::combine_values(all_nodes_on_path[i].clone().left.unwrap().value.as_slice(), all_nodes_on_path[i].clone().right.unwrap().value.as_slice());
-                    //value_to_put is same because according to sane logic right child is none and some child empty for node i+1 is true
-                }
-                Step::Right => {
-                    all_nodes_on_path[i].right = Option::from(Box::new(all_nodes_on_path[i-1].clone()));
-                    if all_nodes_on_path[i-1].clone().right.is_some(){
-                        all_nodes_on_path[i].some_child_empty=all_nodes_on_path[i-1].clone().right.unwrap().some_child_empty;}
-                    else{
-                        all_nodes_on_path[i].some_child_empty=false;
-                    };
-                    all_nodes_on_path[i].value= merkle_tree::combine_values(all_nodes_on_path[i].clone().left.unwrap().value.as_slice(), all_nodes_on_path[i].clone().right.unwrap().value.as_slice());
-                }
-            }
-        }
-        let final_root=all_nodes_on_path[all_nodes_on_path.clone().len()-1].clone();
-        self.root=Option::from(Box::new(final_root.clone()));
-
-        if !final_root.some_child_empty{
-            self.new_root();
-        }
-        self.refresh_value();
+        root.add(value.clone());
+        self.root=Option::from(Box::new(root.clone()));
     }
     pub fn new_root(&mut self){
         if self.root.is_none(){self.root=Option::from(Box::new(Node::make_empty_chain(1)));return;}
@@ -86,17 +27,24 @@ impl MerkleTree {
         self.root=Option::from(Box::new(new_root));
 
     }
-    pub fn refresh_value(&mut self){
-        let mut root=self.root.clone().unwrap().deref().clone();
-        if root.left.is_some(){
-            root.value=combine_values(root.clone().left.unwrap().value.as_slice(), root.clone().right.unwrap().value.as_slice());
-        }
-        self.root=Option::from(Box::new(root.clone()));
+    pub fn compare(&self, other:MerkleTree)->f64{
+        hamming_distance(&self.clone().root.unwrap().value, &other.root.unwrap().value) as f64 / 100.0
     }
 }
 
+fn hamming_distance(a: &[u8], b: &[u8]) -> usize {
+    let len = a.len().min(b.len());
+    let mut distance = 0;
+    for i in 0..len {
+        let diff = a[i] ^ b[i];
+        distance += diff.count_ones() as usize;
+    }
+    distance += (a.len() as isize - b.len() as isize).abs() as usize * 8;
 
-pub fn combine_values(value1: &[u8], value2: &[u8]) -> Vec<u8> {
+    distance}
+
+
+pub fn combine_values(value1: Vec<u8>, value2: Vec<u8>) -> Vec<u8> {
     let hash1 = Md5::digest(value1);
     let hash2 = Md5::digest(value2);
 

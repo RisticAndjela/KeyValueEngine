@@ -33,6 +33,7 @@ impl EntryElement {
         let mut bytes = Vec::new();
         bytes.extend_from_slice(&timestamp_bytes);
         bytes.push(tombstone_byte);
+
         bytes.extend_from_slice(&key_size_bytes);
         bytes.extend_from_slice(&value_size_bytes);
         bytes.extend_from_slice(key_bytes);

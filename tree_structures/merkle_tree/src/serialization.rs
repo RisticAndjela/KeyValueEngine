@@ -9,7 +9,7 @@ fn serialize_node(node: &Option<Box<Node>>, buf: &mut Vec<u8>) {
             buf.write_u8(1).unwrap(); // Indicates presence of a node
             buf.write_u32::<BigEndian>(node.value.len() as u32).unwrap();
             buf.extend_from_slice(&node.value);
-            buf.write_u8(node.some_child_empty as u8).unwrap();
+            buf.write_u8(node.has_empty_child() as u8).unwrap();
             buf.write_i64::<BigEndian>(node.height).unwrap();
             serialize_node(&node.left, buf);
             serialize_node(&node.right, buf);
@@ -32,7 +32,7 @@ fn deserialize_node(cursor: &mut Cursor<&[u8]>) -> Option<Box<Node>> {
         let value_len = cursor.read_u32::<BigEndian>().unwrap() as usize;
         let mut value = vec![0u8; value_len];
         cursor.read_exact(&mut value).unwrap();
-        let some_child_empty = cursor.read_u8().unwrap() != 0;
+        let _some_child_empty = cursor.read_u8().unwrap() != 0;
         let height = cursor.read_i64::<BigEndian>().unwrap();
         let left = deserialize_node(cursor);
         let right = deserialize_node(cursor);
@@ -40,7 +40,6 @@ fn deserialize_node(cursor: &mut Cursor<&[u8]>) -> Option<Box<Node>> {
             value,
             left,
             right,
-            some_child_empty,
             height,
         }))
     } else {

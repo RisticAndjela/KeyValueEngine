@@ -1,7 +1,8 @@
 use md5::{Digest, Md5};
 use byteorder::{ByteOrder, BigEndian, WriteBytesExt};
 use std::time::{SystemTime, UNIX_EPOCH};
-#[derive(Clone)]
+
+#[derive(Clone,Debug)]
 pub struct Hash {
     pub seed: Vec<u8>,
 }

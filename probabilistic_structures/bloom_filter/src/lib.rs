@@ -1,6 +1,6 @@
 use crate::bloom_filter::BloomFilter;
 pub mod bloom_filter;
-mod serialization;
+pub mod serialization;
 #[cfg(test)]
 mod tests {
     use crate::bloom_filter::{BloomFilter};
@@ -16,7 +16,7 @@ mod tests {
 
         bloom_filter.add_element(&element);
 
-        let supposed_true=bloom_filter.check(&element);
+        let supposed_true=bloom_filter.check(&element); // true it might exist
         assert!(supposed_true);
     }
     #[test]
