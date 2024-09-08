@@ -3,6 +3,7 @@
 use std::f64;
 use hash_with_seed::{Hash, create_hash_funcs};
 
+#[derive(Debug)]
 pub struct BloomFilter{
     pub bit_array: Vec<bool>, //set wit stored values
     pub hash_funcs: Vec<Hash>, //hash functions->seeds

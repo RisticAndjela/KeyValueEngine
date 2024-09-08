@@ -1,11 +1,12 @@
-mod memtable_hash_map;
-mod memtable_btree;
-mod memtable_skip_list;
+pub mod memtable_hash_map;
+pub mod memtable_btree;
+pub mod memtable_skip_list;
 
 #[cfg(test)]
 mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
     use entry_element::entry_element::EntryElement;
+    use crate::memtable_btree::MemtableBTree;
     use crate::memtable_hash_map::MemtableHashMap;
     use crate::memtable_skip_list::MemtableSkipList;
 
@@ -136,6 +137,133 @@ mod tests {
         let value = memtable.get_value("key25".to_string());
         assert!(value.is_empty());
     }
+    #[test]
+    fn test_new_memtable() {
+        let memtable = MemtableBTree::new(10, false);
+        assert_eq!(memtable.max_size, 10);
+        assert_eq!(memtable.current_count, 0);
+        assert_eq!(memtable.read_only, false);
+    }
 
+    #[test]
+    fn test_add_element_to_memtable() {
+        let mut memtable = MemtableBTree::new(10, false);
+        let key = "key1".to_string();
+        let value = vec![1, 2, 3];
+        let timestamp = 123456;
+
+        memtable.add(key.clone(), value.clone(), timestamp);
+        assert_eq!(memtable.current_count, 1);
+        assert_eq!(memtable.get_value(key), value);
+    }
+
+    #[test]
+    fn test_add_exceeding_max_size() {
+        let mut memtable = MemtableBTree::new(1, false);  // max size is 1
+        let key1 = "key1".to_string();
+        let value1 = vec![1, 2, 3];
+        let timestamp1 = 123456;
+
+        let key2 = "key2".to_string();
+        let value2 = vec![4, 5, 6];
+        let timestamp2 = 123457;
+
+        // Add first element
+        memtable.add(key1.clone(), value1.clone(), timestamp1);
+        assert_eq!(memtable.current_count, 1);
+
+        // Try to add second element (should fail since max size is 1)
+        memtable.add(key2.clone(), value2.clone(), timestamp2);
+        assert_eq!(memtable.current_count, 1);  // count should remain the same
+        assert!(memtable.get_value(key2).is_empty());
+    }
+
+    #[test]
+    fn test_add_element_in_read_only() {
+        let mut memtable = MemtableBTree::new(10, true);  // memtable is read-only
+        let key = "key1".to_string();
+        let value = vec![1, 2, 3];
+        let timestamp = 123456;
+
+        memtable.add(key.clone(), value.clone(), timestamp);
+        assert_eq!(memtable.current_count, 0);  // Should not add since it's read-only
+        assert!(memtable.get_value(key).is_empty());
+    }
+
+    #[test]
+    fn test_delete_element() {
+        let mut memtable = MemtableBTree::new(10, false);
+        let key = "key1".to_string();
+        let value = vec![1, 2, 3];
+        let timestamp = 123456;
+
+        // Add and then delete the element
+        memtable.add(key.clone(), value.clone(), timestamp);
+        assert_eq!(memtable.current_count, 1);
+        assert_eq!(memtable.get_value(key.clone()), value);
+
+        memtable.delete(key.clone());
+        assert_eq!(memtable.get_value(key), vec![]);  // Should be empty after deletion
+    }
+
+    #[test]
+    fn test_flush_memtable() {
+        let mut memtable = MemtableBTree::new(10, false);
+        let key1 = "key1".to_string();
+        let value1 = vec![1, 2, 3];
+        let timestamp1 = 123456;
+
+        let key2 = "key2".to_string();
+        let value2 = vec![4, 5, 6];
+        let timestamp2 = 123457;
+
+        // Add two elements
+        memtable.add(key1.clone(), value1.clone(), timestamp1);
+        memtable.add(key2.clone(), value2.clone(), timestamp2);
+
+        // Flush the memtable (it should now be read-only)
+        let flushed_elements = memtable.flush();
+
+        assert_eq!(flushed_elements.len(), 2);
+        assert_eq!(flushed_elements[0].key, key1);
+        assert_eq!(flushed_elements[0].value, value1);
+        assert_eq!(flushed_elements[1].key, key2);
+        assert_eq!(flushed_elements[1].value, value2);
+
+        assert!(memtable.read_only);
+    }
+
+    #[test]
+    fn test_kill_memtable() {
+        let mut memtable = MemtableBTree::new(10, false);
+        memtable.kill();
+        assert!(memtable.read_only);  // After killing, memtable should be read-only
+    }
+
+    #[test]
+    fn test_memtable_is_full() {
+        let mut memtable = MemtableBTree::new(2, false);
+        let key1 = "key1".to_string();
+        let value1 = vec![1, 2, 3];
+        let timestamp1 = 123456;
+
+        let key2 = "key2".to_string();
+        let value2 = vec![4, 5, 6];
+        let timestamp2 = 123457;
+
+        let key3 = "key3".to_string();
+        let value3 = vec![7, 8, 9];
+        let timestamp3 = 123458;
+
+        // Add two elements (should work)
+        memtable.add(key1.clone(), value1.clone(), timestamp1);
+        memtable.add(key2.clone(), value2.clone(), timestamp2);
+        assert_eq!(memtable.current_count, 2);
+
+        // Try to add a third (should fail, max size is 2)
+        memtable.add(key3.clone(), value3.clone(), timestamp3);
+        assert_eq!(memtable.current_count, 2);  // count should remain the same
+        assert!(memtable.get_value(key3).is_empty());
+    }
 
 }

@@ -3,6 +3,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use entry_element::entry_element::extract;
 use crate::global_sstable_functions::get_key_and_position;
 
+#[derive(Debug)]
 pub struct Index {
     pub file_path:String,
     pub volume:i32

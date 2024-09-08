@@ -1,5 +1,5 @@
-mod token_bucket;
-mod serialization;
+pub mod token_bucket;
+pub mod serialization;
 
 #[cfg(test)]
 mod tests {

@@ -1,12 +1,14 @@
 use std::ops::Deref;
 use entry_element::entry_element::{EntryElement as record, EntryElement};
 use skip_list::skip_list::{SkipList};
+#[derive(Clone,Debug)]
 pub struct MemtableSkipList{
     pub data: SkipList,
     pub current_count:u32,
     pub max_size: u32,
     pub read_only:bool
 }
+
 impl MemtableSkipList{
     pub fn new(max_size:u32,read_only:bool,entry_min:record,entry_max:record)->Self{
         MemtableSkipList{data:SkipList::make_new(entry_min,entry_max),current_count:2,max_size,read_only}
@@ -23,11 +25,14 @@ impl MemtableSkipList{
             self.current_count+=1;
         }
         else{println!("memtable is read only")}
+        if self.current_count+1>self.max_size{self.kill();return;}
+
     }
     pub fn add_element(&mut self, element:EntryElement){
         if self.current_count+1>self.max_size{println!("cannot add already full");return;}
         if !self.read_only{ self.data.add(element);self.current_count+=1;}
         else{println!("memtable is read only")}
+        if self.current_count+1>self.max_size{self.kill();return;}
     }
     pub fn delete(&mut self,key:String){
         if !self.read_only{

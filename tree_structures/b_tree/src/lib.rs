@@ -2,17 +2,16 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use entry_element::entry_element::EntryElement;
 use crate::node::Node;
 
-mod b_tree;
+pub mod b_tree;
 mod node;
-mod add_new_level_impl;
-mod insertion_impl;
-mod last_insertion;
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Deref;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use entry_element::entry_element::{EntryElement, extract};
+    use entry_element::entry_element::EntryElement;
     use crate::{get_full_node, get_some_node, get_some_shorter_node};
+    use crate::b_tree::BTree;
     use crate::node::Node;
 
     #[test]
@@ -27,9 +26,9 @@ mod tests {
     #[test]
     fn test_will_overflow() {
         let mut node1 = get_some_node().sort_all_elements_and_children();
-        assert!(!node1.will_do_overflow(extract("key8").unwrap())); //should not overflow
+        assert!(!node1.will_overflow("key8".to_string())); //should not overflow
         let mut node2 = get_some_shorter_node().sort_all_elements_and_children();
-        assert!(node2.will_do_overflow(extract("key8").unwrap())); //should overflow
+        assert!(node2.will_overflow("key8".to_string())); //should overflow
         assert!(!node2.is_current_subtree_filled());
         let entry1 = EntryElement::new("key1".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
         let node=Node{elements:vec![entry1],children:vec![]};
@@ -46,46 +45,38 @@ mod tests {
         assert_eq!(full_node.elements[2].key,"key12".to_string());
         assert!(full_node.children[3].clone().unwrap().elements[1].is_irrelevant());
         assert!(full_node.children[3].clone().unwrap().elements[2].is_irrelevant());
-        // full_node.add_new_level(); with this it will panic which it is supposed to happen
-        // full_node.add_empty_children_leaves(); //works but its a private fn now
-        // assert_eq!(full_node.children[0].clone().unwrap().children.len(),6);
-        // assert_eq!(full_node.children[1].clone().unwrap().children.len(),6);
-        // assert_eq!(full_node.children[2].clone().unwrap().children.len(),6);
-        // assert_eq!(full_node.children[3].clone().unwrap().children.len(),6);
-        // assert_eq!(full_node.children[4].clone().unwrap().children.len(),6);
-        // assert_eq!(full_node.children[5].clone().unwrap().children.len(),6);
-    }
-
-    #[test]
-    fn test_overflow(){
-        // let mut node= get_full_node();
-        // assert!(node.will_overflow("key8".to_string()));
-        // let mut node2=get_some_shorter_node();
-        // assert!(node2.will_overflow("key8".to_string()));
-        // let mut node3=get_some_node();
-        // assert!(!node3.will_overflow("key8".to_string()));
     }
     #[test]
     fn test_add(){
         let mut root=Node::initialize_new(3);//smallest height is 2 so smallest num of elements is 2*2-1
-        for i in 1..66 {
+        for i in 1..215{
             let mut str = "key".to_string();
             str.push_str(&i.to_string());
             root.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
         }
-        root.add(EntryElement::new("key66".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
+        root.add(EntryElement::new("key215".to_string(), "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
+
         println!("{:?}",root);
     }
     #[test]
-    fn new_child(){
-        let mut root=Node::initialize_new(3);//smallest height is 2 so smallest num of elements is 2*2-1
-        for i in 1..216 {
+    fn test_btree(){
+        let mut btree= BTree::new();
+        for i in 1..216{
             let mut str = "key".to_string();
             str.push_str(&i.to_string());
-            root.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64),true);
+            btree.add(EntryElement::new(str, "some value".as_bytes().to_vec(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64));
         }
-        root.append_children(root.clone().get_max_height());
-        // for i in root.elements{}
+        let find=btree.search("key1".to_string());
+        assert_eq!("some value".as_bytes().to_vec(),find.value);
+        for i in btree.get_all_elements_sorted(){
+            print!(" {:?} ",i.key);
+        }
+        btree.delete("key1".to_string());
+        let find=btree.search("key1".to_string());
+        assert_eq!(true,find.tombstone);
+        let find=btree.search("key2".to_string());
+        assert_eq!(false,find.tombstone);
+
     }
 
 }

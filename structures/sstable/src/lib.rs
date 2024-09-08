@@ -1,9 +1,9 @@
 use std::string::ToString;
 
-mod index;
-mod summary;
-mod data;
-mod sstable;
+pub mod index;
+pub mod summary;
+pub mod data;
+pub mod sstable;
 pub mod global_sstable_functions;
 
 use entry_element::entry_element::{EntryElement as record, EntryElement};

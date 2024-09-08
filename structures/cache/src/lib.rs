@@ -1,4 +1,4 @@
-mod cache;
+pub mod cache;
 #[cfg(test)]
 mod tests {
     use entry_element::entry_element::EntryElement;

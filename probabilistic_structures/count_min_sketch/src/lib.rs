@@ -1,7 +1,7 @@
 use crate::count_min_sketch::CountMinSketch;
 
-mod count_min_sketch;
-mod serialization;
+pub mod count_min_sketch;
+pub mod serialization;
 
 #[cfg(test)]
 mod tests {

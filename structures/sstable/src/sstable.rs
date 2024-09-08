@@ -13,6 +13,7 @@ use crate::summary::Summary;
 use entry_element::entry_element::{extract, EntryElement as record, EntryElement};
 use crate::global_sstable_functions::get_name;
 
+#[derive(Debug)]
 pub struct SSTable{
     pub dir_path:String,
     pub data:Data,

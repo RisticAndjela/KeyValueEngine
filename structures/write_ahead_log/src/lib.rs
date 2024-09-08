@@ -2,7 +2,7 @@ use std::{fs, io};
 use entry_element::entry_element::EntryElement;
 use crate::write_ahead_log::WriteAheadLog;
 
-mod write_ahead_log;
+pub mod write_ahead_log;
 pub const DIR_PATH:&str="src/storage";
 #[cfg(test)]
 mod tests {
@@ -13,7 +13,7 @@ mod tests {
     #[serial]
     fn test_add(){
         remove_all_files().expect("could not erase files");
-        let mut wal=get_wal();
+        let mut wal=get_wal(4);
         println!("{:?}",wal.get_by_offset(0)); //13
         println!("{:?}",wal.offset);
         println!("{:?}",wal.get_where_stopped()); //14
@@ -111,10 +111,113 @@ mod tests {
         println!("{:?}",wal.get_where_stopped()); //none
 
         }
+    #[test]
+    #[serial]
+    fn test_add1(){
+        remove_all_files().expect("could not erase files");
+        let mut wal=get_wal(10);
+        println!("{:?}",wal.get_by_offset(0)); //13
+        println!("{:?}",wal.offset);
+        println!("{:?}",wal.get_where_stopped()); //14
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19 on 295?
+        println!("{:?}",wal.get_where_stopped()); //13
+        println!("{:?}",wal.get_where_stopped()); //14
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //16
+        let record20 = EntryElement::new("key20".to_string(),vec![1,2,3],123456789);
+        wal.add_record(record20.clone());
+        println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        let record21 = EntryElement::new("key21".to_string(),vec![1,2,3],123456789);
+        wal.add_record(record21.clone());
+        println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+
+        let record22 = EntryElement::new("key22".to_string(),vec![1,2,3],123456789);
+        wal.add_record(record22.clone());
+        println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+
+    let record23 = EntryElement::new("key23".to_string(),vec![1,2,3],123456789);
+        wal.add_record(record23.clone());
+        println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+
+        let record24 = EntryElement::new("key24".to_string(),vec![1,2,3],123456789);
+        wal.add_record(record24.clone());
+        println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //16
+        println!("{:?}",wal.get_where_stopped()); //17
+        println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //20
+        println!("{:?}",wal.get_where_stopped()); //none
+
+        }
+
 }
 
-pub fn get_wal()->WriteAheadLog{
-    let mut wal = WriteAheadLog::new(DIR_PATH.to_string(), 102, 4);
+pub fn get_wal(a:u64)->WriteAheadLog{
+    let mut wal = WriteAheadLog::new(DIR_PATH.to_string(), 102, a);
 
     let record1 = EntryElement::new("key1".to_string(),vec![1,2,3],123456789);
     wal.add_record(record1.clone());

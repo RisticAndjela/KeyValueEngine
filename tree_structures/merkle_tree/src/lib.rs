@@ -1,5 +1,5 @@
 pub mod merkle_tree;
-mod node;
+pub mod node;
 pub mod serialization;
 
 #[cfg(test)]

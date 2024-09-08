@@ -7,14 +7,16 @@
     "capacity": 5
   },
   "skip_list": {
-    "odds_of_flips": 70
+    "odds_of_flips": 70,
+    "min_bound":1,
+    "max_bound": 1000
   },
   "memtable": {
     "max_size" : 20,
-    "number_of_hash_memtables" : 40,
-    "number_of_skip_list_memtables" : 40,
-    "number_of_b_tree_memtables" : 40,
-    "read_write" : "hash"
+    "number_of_hash_memtables" : 5,
+    "number_of_skip_list_memtables" : 0,
+    "number_of_b_tree_memtables" : 0,
+    "read_write" : "Hash"
   },
   "sstable": {
     "volume_index" : 7,
@@ -25,7 +27,7 @@
     "refill_rate" : 4
   },
   "wal": {
-    "segment_length": 300,
+    "segment_length": 3000,
     "max_segments_in_memory" : 5
   },
   "text": {

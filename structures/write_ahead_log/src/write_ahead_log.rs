@@ -4,6 +4,7 @@ use std::fmt::format;
 use entry_element::entry_element::{EntryElement};
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 
+#[derive(Clone,Debug)]
 pub struct WriteAheadLog {
     pub storage_path: String, // path to all wal files
     pub segment_length: u64, // we can predefine this but all segments will be same length
@@ -12,6 +13,16 @@ pub struct WriteAheadLog {
     pub max_offset:u64
 }
 impl WriteAheadLog {
+    pub fn open(storage_path:String,segment_length:u64, max_segments_in_memory: u64)->Self{
+        let mut wal =WriteAheadLog{storage_path,segment_length,offset:0,max_segments_in_memory,max_offset:0};
+        for one in wal.get_all_files(){
+            let file = File::open(&one).expect("Failed to open WAL file");
+            let mut reader = BufReader::new(file);
+            let total_size = reader.get_ref().metadata().unwrap().len();
+            wal.max_offset+=total_size;
+        }
+        wal
+    }
     pub fn new(directory_path: String, segment_length: u64, max_segments_in_memory: u64) -> Self {
         let mut wal = WriteAheadLog {
             storage_path: directory_path,
@@ -44,7 +55,7 @@ impl WriteAheadLog {
         self.max_offset = (self.get_all_files().len() - 1) as u64 * self.segment_length;
     }
     pub fn add_record(&mut self,entry: EntryElement){
-        println!("{}vs{}",self.offset,self.max_offset);
+        // println!("{}vs{}",self.offset,self.max_offset);
         self.offset=self.max_offset;
         let serialized=entry.serialize();
         // println!("Add {}",entry.key);
@@ -230,11 +241,11 @@ impl WriteAheadLog {
             }
             else{
                 reader.seek(SeekFrom::Current(-1)).expect("Failed to seek in file");
-                println!("total:{} left:{} currently on:{}", total_size,total_size- reader.stream_position().unwrap() ,reader.stream_position().unwrap());
+                // println!("total:{} left:{} currently on:{}", total_size,total_size- reader.stream_position().unwrap() ,reader.stream_position().unwrap());
                 let mut size=[0u8;8];
                 reader.read_exact(&mut size).expect("Failed to read size from file");
                 // read data
-                println!("here i am: {} size i need:{}",offset,u64::from_be_bytes(size));
+                // println!("here i am: {} size i need:{}",offset,u64::from_be_bytes(size));
                 let mut data=vec![0u8;u64::from_be_bytes(size) as usize];
                 reader.read_exact(&mut data).expect("Failed to read data from file");
                 let mut is_end=[0u8;1];
@@ -270,12 +281,15 @@ impl WriteAheadLog {
                 }
                 else{
                     // normally
-                    println!("THIS IS AREA 7");
-                    result=Some(EntryElement::deserialize(data.as_slice()))
+                    println!("THIS IS AREA this 7");
+                    result=Some(EntryElement::deserialize(data.as_slice()));
+                    self.offset=((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset;
+                    return result
+
                 }
             }
         }
-        println!("I am returning offset:{} =({}-1)*{}+{}+8+{}",((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset,index,self.segment_length,result.clone()?.serialize().len() as u64 ,file_offset);
+        // println!("I am returning offset:{} =({}-1)*{}+{}+8+{}",((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset,index,self.segment_length,result.clone()?.serialize().len() as u64 ,file_offset);
         self.offset=((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset;
         result
     }
@@ -305,6 +319,21 @@ impl WriteAheadLog {
         Some(EntryElement::deserialize(data.as_slice()))
     }
 
+
+    pub fn will_need_to_delete_oldest(&self,data_size:u64)->bool{
+        let total_offset = self.max_offset + data_size;
+        total_offset / self.segment_length >= self.max_segments_in_memory
+    }
+    pub fn get_all_records_from_oldest_segment(&mut self)->Vec<EntryElement>{
+        let mut result:Vec<EntryElement>=vec![];
+        self.offset=0; //need to start from start because I will retire only segment 0001
+        while self.offset/self.segment_length<1{
+            let e= self.get_where_stopped();
+            if e.is_none(){continue;} // only possible if the first read data is part of record that belongs to previous segment
+            result.push(e.unwrap());
+        }
+        result
+    }
 }
 
 

@@ -2,6 +2,7 @@
 use entry_element::entry_element::EntryElement;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Cache{
     pub capacity:u64,
     pub key_position:HashMap<String,usize>,

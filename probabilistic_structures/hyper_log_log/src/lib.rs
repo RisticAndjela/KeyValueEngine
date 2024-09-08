@@ -1,7 +1,7 @@
 use crate::hyper_log_log::HyperLogLog;
 
-mod hyper_log_log;
-mod serialization;
+pub mod hyper_log_log;
+pub mod serialization;
 
 #[cfg(test)]
 mod tests {

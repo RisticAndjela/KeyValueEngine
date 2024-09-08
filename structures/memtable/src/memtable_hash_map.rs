@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use entry_element::entry_element::{EntryElement as record, EntryElement};
 
+#[derive(Clone,Debug)]
 pub struct MemtableHashMap{
     pub data: HashMap<String, record>,
     pub max_size: u32,
@@ -14,6 +15,7 @@ impl MemtableHashMap{
     pub fn kill(&mut self){
         if self.read_only{println!("already inactive");}
         else{self.read_only=true;}
+        // println!("KILLED")
     }
     pub fn add(&mut self,key:String,value:Vec<u8>,timestamp:i64){
         if self.current_count+1>self.max_size{println!("cannot add already full");return;}
@@ -23,11 +25,15 @@ impl MemtableHashMap{
             self.current_count+=1;
         }
         else{println!("memtable is read only")}
+        if self.current_count+1>self.max_size{self.kill();return;}
+
     }
     pub fn add_element(&mut self, element:EntryElement){
         if self.current_count+1>self.max_size{println!("cannot add already full");return;}
         if !self.read_only{ self.data.insert(element.key.clone(),element);self.current_count+=1;}
         else{println!("memtable is read only")}
+        if self.current_count+1>self.max_size{self.kill();return;}
+
     }
     pub fn delete(&mut self,key:String){
         if !self.read_only{

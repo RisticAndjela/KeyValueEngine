@@ -1,5 +1,5 @@
-mod sim_hash;
-mod serialization;
+pub mod sim_hash;
+pub mod serialization;
 
 #[cfg(test)]
 mod tests {

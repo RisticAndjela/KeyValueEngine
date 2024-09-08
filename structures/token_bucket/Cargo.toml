@@ -1,5 +1,5 @@
 [package]
-name = "lsm_tables"
+name = "token_bucket"
 version = "0.1.0"
 edition = "2021"
 
