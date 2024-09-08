@@ -1,0 +1,30 @@
+BLOOM FILTER
+    "false_positive_rate": 0.1,
+    "expected_elements" : 1000
+
+CACHE
+    "capacity": 5
+
+SKIP LIST
+    "odds_of_flips": 70     // rate in percentage of how many flips would result with YES
+
+MEMTABLE
+    "max_size" : 20,
+    "number_of_hash_memtables" : 40,        // since I need to have n-instance of memtable, I
+    "number_of_skip_list_memtables" : 5,    // could  have more of the different types od memtables because
+    "number_of_b_tree_memtables" : 7,       // they all are read only
+    "read_write" : "hash"                   // options are "hash" , "b_tree" , "skip_list"
+
+SSTABLE
+    "volume_index" : 7,
+    "volume_summary" : 7
+
+TOKEN BUCKET
+    "tokens" : 5,
+    "refill_rate" : 5       // there is no point for refill rate to be larger than number of tokens i possible can have
+
+WAL
+    "segment_length": 300,
+    "max_segments_in_memory" : 5
+
+TEXT        // text used in program

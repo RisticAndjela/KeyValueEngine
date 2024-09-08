@@ -4,22 +4,35 @@
     "expected_elements" : 1000
   },
   "cache": {
-
+    "capacity": 5
+  },
+  "skip_list": {
+    "odds_of_flips": 70
   },
   "memtable": {
     "max_size" : 20,
-    "number_of_n_instance" : 40,
-    "type" : "hash"
+    "number_of_hash_memtables" : 40,
+    "number_of_skip_list_memtables" : 40,
+    "number_of_b_tree_memtables" : 40,
+    "read_write" : "hash"
   },
   "sstable": {
     "volume_index" : 7,
     "volume_summary" : 7
   },
   "token_bucket": {
-    "tokens" : 5
+    "tokens" : 5,
+    "refill_rate" : 4
   },
   "wal": {
     "segment_length": 300,
     "max_segments_in_memory" : 5
+  },
+  "text": {
+    "welcoming" : "WELCOME TO THE PROGRAM!",
+    "description": "We are working with key-value engine for data storage.The K-V-E relies on various structures and algorithms, including: \n   WAL, \n   SSTable, \n   Memtable, \n   Probabilistic structures, \n   Tree structures, \nand many others.",
+    "options": "To truly unlock the full potential, here is a quick explanation: you can PUT, DELETE, and GET records across different areas of memory. \nYou have access to various types of storage and the ability to explore the deepest potential of memory.",
+    "config_file": "When discussing the configuration file, we represented external configuration through a JSON file, which you can always modify. \nYou can also delete some elements manually, as the Rust file - default_constants.rs contains default values.",
+    "use": "If you want to leave enter EXIT, if you want to do an operation your options are GET, PUT or DELETE.\nWhen you want to explore GET function you'll enter 'GET [key]' and in return you will get the value of the record storing that key.\nWhen you want to explore PUT function you'll enter 'PUT [key] [value]'\nWhen you want to explore DELETE function you'll enter 'DELETE [key]'"
   }
 }
