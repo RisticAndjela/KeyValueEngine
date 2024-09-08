@@ -1,159 +1,333 @@
-use std::fs::{File};
-use std::{fs, io};
-use std::ops::Add;
+use std::fs::{File, OpenOptions};
+use std::{fs};
+use std::fmt::format;
 use entry_element::entry_element::{EntryElement};
-use entry_element::constants::{CONST_LEN_OF_ENTRY, KEY_SIZE_START, VALUE_SIZE_START};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 
 pub struct WriteAheadLog {
     pub storage_path: String, // path to all wal files
     pub segment_length: u64, // we can predefine this but all segments will be same length
-    pub offset:u64, // we need to be able to read elements one by one and start from the one we stopped at, this offset is global meaning                   all files as well will be included not just from the last one
+    pub offset:u64, // we need to be able to read elements one by one and start from the one we stopped at, this offset is global meaning all files as well will be included not just from the last one
+    pub max_segments_in_memory:u64, // kinda like cache memory, I don't need old ones
+    pub max_offset:u64
 }
-
 impl WriteAheadLog {
-    pub fn new(directory_path:String, segment_length:u64)->Self{
-        let wal=WriteAheadLog{storage_path:directory_path,segment_length,offset:0};
-        let _file = File::create(get_name(wal.storage_path.clone(),1));
+    pub fn new(directory_path: String, segment_length: u64, max_segments_in_memory: u64) -> Self {
+        let mut wal = WriteAheadLog {
+            storage_path: directory_path,
+            segment_length,
+            offset: 0,
+            max_segments_in_memory,
+            max_offset:0
+        };
+        // Create the first file and write 0 to indicate it starts with a full element
+        wal.add_new_file(false);
         wal
     }
-    fn get_file_and_offset_for_file(&self) -> (String, u64) {
-        let file_index = (( self.offset / self.segment_length)+1) as usize;
-        let offset_within_file = self.offset % self.segment_length;
-        (get_name(self.storage_path.clone(),file_index as i32), offset_within_file)
-    }
-    pub fn get_file_current_size(&self,filename:String)->u64{
-        let metadata = std::fs::metadata(filename);
-        metadata.unwrap().len()
-    }
-    pub fn get_current_index(&self,filename:String)->i32{
-        filename.as_str().split('_').last().and_then(|s| s.split('.').next()).and_then(|s| s.parse::<i32>().ok()).unwrap()
-    }
-    pub fn add_new_file(&mut self){
-        // filename is wal_0001 or like wal_0213 probably not that long but needs to be taken in consideration
-        let binding = self.get_all_files().clone();
-        let last_file=binding.last().unwrap();
-        let mut index =self.get_current_index(last_file.clone());
-        index+=1;
-        let new_filename=get_name(self.storage_path.clone(),index);
-        File::create(&new_filename).expect("cannot create :(");
-
-        self.offset= (self.get_all_files().len() - 1) as u64 * self.segment_length;
-    }
-    pub fn add_element(&mut self, element: &EntryElement){
-        let files = self.get_all_files();
-        let mut last_file=files.last().unwrap().clone();
-        let mut current_size =self.get_file_current_size(last_file.clone());
-        let left_space=&self.segment_length-&current_size;
-        if element.size()>left_space{
-            self.add_new_file();
-            let binding2 = self.get_all_files();
-            last_file= binding2.last().unwrap().clone();
-            current_size=self.get_file_current_size(last_file.clone());
+    pub fn add_new_file(&mut self, continue_previous_byte: bool) {
+        // continue_previous_byte indicates whether this file starts with a continued element
+        let mut index = (self.offset.clone() - self.offset.clone() % self.segment_length) / self.segment_length;
+        if index >= self.max_segments_in_memory {
+            self.remove_oldest_file();
+            index -= 1;
         }
-        let mut file = File::options()
-            .read(true)
-            .write(true)
-            .open(&last_file).unwrap();
+        index += 1;
 
-        let last_index=self.get_current_index(last_file) as u64;
-        let offset_to_write=(last_index - 1 )* self.segment_length + current_size;
-        self.offset=offset_to_write;
+        let new_filename = get_name(self.storage_path.clone(), index as i32);
+        let mut file = File::create(&new_filename).expect("Cannot create new WAL file");
 
-        file.seek(SeekFrom::Start(self.get_file_and_offset_for_file().1)).expect("cannot seek :(");
-        file.write_all(element.serialize().as_slice()).expect("cannot write :(");
+        // Write 1 if this file is a continuation of a previous element, otherwise write 0
+        let start_byte = if continue_previous_byte { 1 } else { 0 };
+        file.write_all(&[start_byte]).expect("Failed to write start byte to new WAL file");
 
-        self.offset+=  element.size();
+        self.offset = (self.get_all_files().len() - 1) as u64 * self.segment_length;
+        self.max_offset = (self.get_all_files().len() - 1) as u64 * self.segment_length;
     }
-    pub fn remove_file(&mut self, index: i32){
-        let mut files=self.get_all_files();
-        if files.len() < index as usize {panic!("out of collection of files :(")}
-        //remove those who don't need changes
-         for _ in 0..index{
-             files.remove(0);
-         }
-        //remove actual file
-        let removed_file=get_name(self.storage_path.clone(),index);
-        fs::remove_file(&removed_file).expect("cannot remove :(");
+    pub fn add_record(&mut self,entry: EntryElement){
+        println!("{}vs{}",self.offset,self.max_offset);
+        self.offset=self.max_offset;
+        let serialized=entry.serialize();
+        // println!("Add {}",entry.key);
+        self.add(serialized);
+    }
+    pub fn add(&mut self,data:Vec<u8>){
+        let data_vec_size=data.len() as u64;
+        let (file_path,file_offset)=self.get_file_and_offset_of_current_file(self.offset);
+        let left_space_in_current_segment = self.segment_length - file_offset;
+        if left_space_in_current_segment > data_vec_size + 8 {
+            // println!("add whole");
+            let mut vec = vec![];
+            vec.extend(data_vec_size.to_be_bytes());
+            vec.extend(data);
+            self.write(vec);
+            if left_space_in_current_segment-data_vec_size-8<9{
+                let file = OpenOptions::new().append(true).open(&file_path).expect("Failed to open data file for appending");
+                let mut writer = BufWriter::new(file);
+                writer.seek(SeekFrom::Start(self.offset)).expect("Seek is wrong");
+                writer.write_all(&"*".as_bytes()).unwrap(); // end of each segment is '*'
+                writer.flush().expect("Failed to flush writer");
+                self.offset = self.segment_length * (extract_index_from_name(file_path.as_str()) as u64);
+                self.max_offset = self.segment_length * (extract_index_from_name(file_path.as_str()) as u64);
+                self.add_new_file(false);
+            }
+        }
+        else if left_space_in_current_segment > 9{
+            let first_half_size = left_space_in_current_segment - 8;
 
-        // Rename left files
-        let mut working_on_index = index+1;
-        for file in files {
-            working_on_index -= 1;
-            let one_before_file = get_name(self.storage_path.clone(),working_on_index);
-            fs::rename(&file, &one_before_file).expect("cannot rename :(");
-            working_on_index +=2;
+            let first_half = &data[..first_half_size as usize];
+            let mut first_part = vec![];
+            // println!("left: {}",left_space_in_current_segment);
+            first_part.extend(first_half_size.to_be_bytes());
+            first_part.extend(first_half);
+            // println!("duzina: {}",first_half.len());
+            first_part.extend('*'.to_string().as_bytes());
+            self.write(first_part);
+
+            // Write the remaining data in the next segment
+            let mut second_half = data_vec_size.to_be_bytes().to_vec(); // to subtract for seek from back later
+            second_half.extend(data[first_half_size as usize..].to_vec());
+            self.add_new_file(true);  // the next file is a continuation
+            self.add(second_half);  // recursively add the remaining data
         }
-        let offset_on_index=self.get_current_index(self.get_file_and_offset_for_file().0);
-        if offset_on_index==index{
-            self.offset=0;
+        else{
+            // end this go for new
+            let file = OpenOptions::new().append(true).open(&file_path).expect("Failed to open data file for appending");
+            let mut writer = BufWriter::new(file);
+            writer.seek(SeekFrom::Start(self.offset)).expect("Seek is wrong");
+            writer.write_all(&"*".as_bytes()).unwrap(); // end of each segment is '*'
+            writer.flush().expect("Failed to flush writer");
+            self.offset = self.segment_length * (extract_index_from_name(file_path.as_str()) as u64) ;
+            self.max_offset = self.segment_length * (extract_index_from_name(file_path.as_str()) as u64) ;
+            self.add_new_file(false);
+            self.add(data);
         }
-        else if offset_on_index>index{
-            self.offset-=self.segment_length;
+    }
+    pub fn write(&mut self, data: Vec<u8>) {
+        let (file_path, offset) = self.get_file_and_offset_of_current_file(self.offset);
+        let file = OpenOptions::new().append(true).open(&file_path).expect("Failed to open data file for appending");
+        let mut writer = BufWriter::new(file);
+        writer.seek(SeekFrom::Start(offset)).expect("Seek is wrong");
+        writer.write_all(&data).unwrap();
+        writer.flush().expect("Failed to flush writer");
+        self.offset += data.len() as u64;
+        self.max_offset+=data.len() as u64;
+
+        if self.offset % self.segment_length == 0 {
+            self.add_new_file(false);  // Start a new file and it's not a continuation
         }
     }
     pub fn get_all_files(&mut self) -> Vec<String> {
-        let mut all = vec![];
-
-        for entry in fs::read_dir("src/storage").unwrap() {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_file() {
-                    let ind = self.get_current_index(path.file_name().unwrap().to_string_lossy().to_string());
-                    all.push(get_name(self.storage_path.clone(),ind));
+        let mut file_names = Vec::new();
+        if let Ok(entries) = fs::read_dir(self.storage_path.clone()) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if path.is_file() {
+                        if let Some(file_name) = path.file_name() {
+                            if let Some(file_name_str) = file_name.to_str() {
+                                file_names.push(file_name_str.to_string());
+                            }
+                        }
+                    }
                 }
             }
         }
-        all
-    }
-    pub fn read_element_at(&mut self,filename: &str, position: u64) -> io::Result<EntryElement> {
-        let mut file = File::open(filename)?;
-        file.seek(SeekFrom::Start(position))?;
-        let mut constant_part = vec![0u8; CONST_LEN_OF_ENTRY];
-        file.read_exact(&mut constant_part)?;
-        let key_size = u64::from_be_bytes(constant_part[KEY_SIZE_START..VALUE_SIZE_START].try_into().unwrap());
-        let value_size = u64::from_be_bytes(constant_part[VALUE_SIZE_START..CONST_LEN_OF_ENTRY].try_into().unwrap());
-        let mut element = vec![0u8; CONST_LEN_OF_ENTRY + key_size as usize + value_size as usize];
-        file.seek(SeekFrom::Start(position))?;
-        file.read_exact(&mut element)?;
-        let entry=EntryElement::deserialize(&element);
-        self.offset+=entry.size();
-        Ok(entry)
-    }
-    pub fn read_where_stopped(&mut self)-> io::Result<EntryElement> {
-        let binding = self.get_file_and_offset_for_file();
-        let file=binding.0.as_str();
-        let offset_file=binding.1;
-        let entry=self.read_element_at(file,offset_file);
-        if entry.is_err(){
-            let wrong_index=self.get_current_index(file.to_string());//first I will try to go in next file
-            self.offset=wrong_index as u64*self.segment_length ;//beginning of new file
 
-            let last=self.get_all_files().last().unwrap().to_string(); //I need to check if they are actually more files
-            if self.get_current_index(last)+1==wrong_index{
-                 self.offset=0;//should change to error of some kind but for now start from beginning
-                return self.read_where_stopped();
-            }
-
-            return self.read_where_stopped();
+        file_names
+    }
+    pub fn remove_oldest_file(&mut self){
+        //remove oldest file
+        let files=self.get_all_files();
+        let removed_file=get_name(self.storage_path.clone(),1);
+        fs::remove_file(&removed_file).expect("cannot remove :(");
+        // Rename left files
+        let mut working_on_index = 2;
+        for file in files.iter().skip(1) {
+            working_on_index -= 1;
+            let new_name = get_name(self.storage_path.clone(),working_on_index);
+            fs::rename(&format!("{}/{file}",self.storage_path), &new_name).expect("cannot rename :(");
+            working_on_index +=2;
         }
-        entry
+        let offset_on_index=(self.offset.clone() - self.offset.clone() % self.segment_length) / self.segment_length + 1;
+        if offset_on_index == 1 {
+            self.offset=0;
+            self.max_offset=0;
+        }
+        else if offset_on_index> 1 {
+            self.offset-=self.segment_length;
+            self.max_offset-=self.segment_length;
+        }
     }
+    // function that will write data in any file that has room, this data is either already split or full, but will never overstock on files capacity
+    pub fn get_file_and_offset_of_current_file(&self, offset:u64)->(String, u64){
+        let current_offset=offset.clone() % self.segment_length;
+        let file_index=make_numer_four_digit((offset.clone() - current_offset) / self.segment_length + 1);
+        let filepath=format!("{}/wal_{}.bin",self.storage_path,file_index);
+        (filepath,current_offset)
+    }
+
+
+    pub fn get_where_stopped(&mut self)->Option<EntryElement>{
+        self.get_by_offset(self.offset)
+    }
+    pub fn get_by_offset(&mut self, mut offset:u64) ->Option<EntryElement>{
+        if offset>=self.max_offset{self.offset=0;offset=0;}
+        let mut result :Option<EntryElement>= None;
+        let (this_file_path,file_offset)=self.get_file_and_offset_of_current_file(offset);
+        let index=extract_index_from_name(this_file_path.as_str()) as u64;
+        println!("\nfile: {this_file_path}, offset: {file_offset}");
+
+        let file = File::open(&this_file_path).expect("Failed to open WAL file");
+        let mut reader = BufReader::new(file);
+        let total_size = reader.get_ref().metadata().unwrap().len();
+        // seek to the specified position
+        reader.seek(SeekFrom::Start(file_offset)).expect("Failed to seek in file");
+
+        if file_offset == 0 {
+            // there is a chance I have previous part of an element
+            let mut first_byte =[0u8;1];
+            reader.read_exact(&mut first_byte).expect("Failed to read first byte from file");
+            if first_byte[0]==1{
+                return if index > 1 {
+                    println!("THIS IS AREA 1");
+                    // read part from before part from now
+                    // seek done
+                    let previous_file_string = get_name(self.storage_path.clone(), index as i32 - 1);
+                    self.take_from_file1_and_file2(previous_file_string, this_file_path,1)
+                }
+                else {
+                    println!("THIS IS AREA 2");
+                    // previous wal was deleted still need to seek
+                    let mut size = [0u8; 8];
+                    reader.read_exact(&mut size).expect("Failed to read size from file");
+                    // read non relevant data
+                    let mut data = vec![0u8; u64::from_be_bytes(size) as usize];
+                    reader.read_exact(&mut data).expect("Failed to read data from file");
+                    self.offset = reader.stream_position().unwrap() as u64;
+                    None //specific case
+                }
+            }
+            if first_byte[0]==0{
+                println!("THIS IS AREA 3");
+                // read normally
+                // read size
+                let mut size=[0u8;8];
+                reader.read_exact(&mut size).expect("Failed to read size from file");
+                // read data
+                let mut data=vec![0u8;u64::from_be_bytes(size) as usize];
+                reader.read_exact(&mut data).expect("Failed to read data from file");
+                self.offset=((index-1)*self.segment_length)+u64::from_be_bytes(size)+8 +file_offset+1;
+                return Some(EntryElement::deserialize(data.as_slice()))
+            }
+        }
+        else{
+            // I might reach end and see that I cannot get whole element
+            // read size
+            let mut one=[0u8;1];
+            reader.read_exact(&mut one).expect("Failed to read first byte from file");
+            if one[0]=='*'.to_string().as_bytes()[0]{
+                return self.get_by_offset(self.segment_length*index+1);
+            }
+            else{
+                reader.seek(SeekFrom::Current(-1)).expect("Failed to seek in file");
+                println!("total:{} left:{} currently on:{}", total_size,total_size- reader.stream_position().unwrap() ,reader.stream_position().unwrap());
+                let mut size=[0u8;8];
+                reader.read_exact(&mut size).expect("Failed to read size from file");
+                // read data
+                println!("here i am: {} size i need:{}",offset,u64::from_be_bytes(size));
+                let mut data=vec![0u8;u64::from_be_bytes(size) as usize];
+                reader.read_exact(&mut data).expect("Failed to read data from file");
+                let mut is_end=[0u8;1];
+                let exist=reader.read_exact(&mut is_end);
+                if !exist.is_ok() {
+                    println!("THIS IS AREA 8");
+                    result=Some(EntryElement::deserialize(data.as_slice()))
+                }
+                if is_end[0]=='*'.to_string().into_bytes()[0]{
+                    if index+1<=self.max_segments_in_memory{
+                        let next_file_string=get_name(self.storage_path.clone(), index as i32 + 1);
+                        let next_file = File::open(&next_file_string).expect("Failed to open WAL file");
+                        let mut next_reader = BufReader::new(next_file);
+                        let mut first_byte =[0u8;1];
+                        next_reader.read_exact(&mut first_byte).expect("Failed to read first byte from file");
+                        if first_byte[0]==1{
+                            println!("THIS IS AREA 4");
+                            // before - after
+                            // good seek
+                            return self.take_from_file1_and_file2(this_file_path,next_file_string,0)
+                        }
+                        else {
+                            // normal
+                            println!("THIS IS AREA 5");
+                            result= Some(EntryElement::deserialize(data.as_slice()))
+                        }
+                    }
+                    else{
+                        println!("THIS IS AREA 6");
+                        self.offset=0;
+                        return None;
+                    }
+                }
+                else{
+                    // normally
+                    println!("THIS IS AREA 7");
+                    result=Some(EntryElement::deserialize(data.as_slice()))
+                }
+            }
+        }
+        println!("I am returning offset:{} =({}-1)*{}+{}+8+{}",((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset,index,self.segment_length,result.clone()?.serialize().len() as u64 ,file_offset);
+        self.offset=((index-1)*self.segment_length)+result.clone()?.serialize().len() as u64 + 8 +file_offset;
+        result
+    }
+    pub fn take_from_file1_and_file2(&mut self, file_before_string:String,file_after_string:String,direction:u64)->Option<EntryElement>{
+        // if direction is 1 I will add 1 to offset at the end if its 0 I will add 0
+        let file_before = File::open(&file_before_string).expect("Failed to open WAL file");
+        let mut reader_before = BufReader::new(file_before);
+        let file_after = File::open(&file_after_string).expect("Failed to open WAL file");
+        let mut reader_after = BufReader::new(file_after);
+
+        reader_after.seek(SeekFrom::Start(1)).expect("Failed to seek in file");
+        let mut second_part_size=[0u8;8];
+        reader_after.read_exact(&mut second_part_size).expect("Failed to read first byte from file");
+        let mut second_part_data=vec![0u8;u64::from_be_bytes(second_part_size) as usize];
+        reader_after.read_exact(&mut second_part_data).expect("Failed to read second byte from file");
+        let data_size=u64::from_be_bytes(second_part_data[0..8].try_into().expect("slice with incorrect length"));
+        let to_seek_back=(data_size-(u64::from_be_bytes(second_part_size)-8)) as i64;
+        let second_data=second_part_data[8..].to_vec();
+        self.offset = (self.segment_length*(extract_index_from_name(file_after_string.as_str()) as u64 -1)) + reader_after.stream_position().unwrap()+direction;
+
+        reader_before.seek(SeekFrom::End(-to_seek_back-1)).expect("Failed to seek in file");
+        let mut first_part=vec![];
+        reader_before.read_to_end(&mut first_part).expect("Failed to read first byte from file");
+        let mut data=first_part[..first_part.len()-1].to_vec();
+        data.extend(second_data);
+
+        Some(EntryElement::deserialize(data.as_slice()))
+    }
+
 }
 
-pub fn get_name(storage_path:String, index:i32) -> String {
-    let mut new_filename=String::new().add(storage_path.as_str());
-    new_filename.push_str("/wal_");
-    match index.to_string().len() {
-        4 => new_filename.push_str(&index.to_string()),
-        3 => { new_filename.push_str("0");
-            new_filename.push_str(&index.to_string()); },
-        2 => { new_filename.push_str("00");
-            new_filename.push_str(&index.to_string()); },
-        1 => { new_filename.push_str("000");
-            new_filename.push_str(&index.to_string()); },
-        _ => {panic!("no more space")}
+
+pub fn get_name(storage_path: String, index: i32) -> String {
+    format!("{}/wal_{}.bin", storage_path, make_numer_four_digit(index as u64))
+}
+pub fn extract_index_from_name(file_name: &str) -> i32 {
+    let parts: Vec<&str> = file_name.split('/').collect(); // Split by '/'
+
+    // Take the last part (the file name itself), and remove "wal_" prefix and ".bin" suffix
+    if let Some(file_part) = parts.last() {
+        if file_part.starts_with("wal_") && file_part.ends_with(".bin") {
+            let index_str = &file_part[4..file_part.len() - 4]; // "wal_" is 4 chars, ".bin" is 4 chars
+            if let Ok(index) = index_str.parse::<i32>() {
+                return index; // Return the parsed index
+            }
+        }
     }
-    new_filename.push_str(".bin");
-    return new_filename;
+
+    // If parsing fails, return a default value or handle the error
+    -1
+}
+
+pub fn make_numer_four_digit(number: u64) -> String {
+    format!("{:04}", number)
 }

@@ -1,0 +1,25 @@
+{
+  "bloom_filter": {
+    "false_positive_rate": 0.1,
+    "expected_elements" : 1000
+  },
+  "cache": {
+
+  },
+  "memtable": {
+    "max_size" : 20,
+    "number_of_n_instance" : 40,
+    "type" : "hash"
+  },
+  "sstable": {
+    "volume_index" : 7,
+    "volume_summary" : 7
+  },
+  "token_bucket": {
+    "tokens" : 5
+  },
+  "wal": {
+    "segment_length": 300,
+    "max_segments_in_memory" : 5
+  }
+}

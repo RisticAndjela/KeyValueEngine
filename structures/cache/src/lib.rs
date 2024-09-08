@@ -3,7 +3,7 @@ mod cache;
 mod tests {
 
     #[test]
-    fn it_works() {
+    fn test_cache() {
 
     }
 }

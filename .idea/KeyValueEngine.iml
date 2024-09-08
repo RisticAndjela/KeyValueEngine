@@ -25,6 +25,7 @@
       <sourceFolder url="file://$MODULE_DIR$/structures/token_bucket/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tree_structures/b_tree_var2/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tree_structures/b_treevar2/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/startup/startup_app/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/structures/ProbabilisticTypeOperations/BloomFilter/BloomFilter/target" />
       <excludeFolder url="file://$MODULE_DIR$/probabilistic_structures/bloom_filter/target" />
