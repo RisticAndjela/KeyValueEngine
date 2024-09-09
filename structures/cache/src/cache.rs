@@ -1,8 +1,9 @@
 //Least Recently Used Cache
 use entry_element::entry_element::EntryElement;
 use std::collections::HashMap;
+use std::ops::Deref;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cache{
     pub capacity:u64,
     pub key_position:HashMap<String,usize>,
@@ -26,6 +27,13 @@ impl Cache{
             }
         }
         self.key_position.insert(element.key, self.elements.len()-1);
+    }
+    pub fn delete(&mut self, key:String){
+        if self.key_position.get(&key).is_none(){return;}
+        let position=self.key_position.get(&key).unwrap();
+        let mut element:EntryElement=self.elements[*position].clone().1;
+        element.delete();
+        self.put(element);
     }
     fn rearrange(&mut self,delete_at_position:usize){
         self.elements.remove(delete_at_position);

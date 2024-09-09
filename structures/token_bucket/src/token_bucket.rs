@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TokenBucket {
     pub capacity: u64,          // max tokens
     pub tokens: u64,            // current no. tokens

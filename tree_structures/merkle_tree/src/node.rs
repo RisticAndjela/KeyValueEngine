@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use crate::merkle_tree::{combine_values};
 
 #[derive(Clone, Debug)]

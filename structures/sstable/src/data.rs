@@ -1,9 +1,8 @@
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::ops::Deref;
-use std::ptr::read;
 use entry_element::entry_element::{extract, EntryElement as record};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Data{
     pub file_path:String, // path to directory in which is held all the data, index, summary and filter files
 }

@@ -54,14 +54,14 @@ impl MemtableHashMap{
     }
     pub fn flush(&mut self)->Vec<record>{
         let mut elements: Vec<record> = self.data.values().cloned().collect();
-        elements.sort_by(|a, b| a.key.cmp(&b.key));
+        elements.sort_by(|a, b| a.extract_number_from_key().unwrap().cmp(&b.extract_number_from_key().unwrap()));
         self.kill();
         elements
     }
     pub fn get_value(&self,key:String)->Vec<u8>{
         let element=self.data.get(&key.clone());
         if element.is_some(){
-            return element.unwrap().clone().value;
+            if element.unwrap().tombstone==false{return element.unwrap().clone().value;}
         }
         return vec![]
     }

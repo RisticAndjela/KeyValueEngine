@@ -1,4 +1,3 @@
-use crate::put::put;
 use crate::representation_of_program_as_structure::Program;
 
 impl Program{
@@ -6,8 +5,9 @@ impl Program{
         for i in 1..216{
             let mut str = "key".to_string();
             str.push_str(&i.to_string());
-            put(self, str.clone(), "some value".to_string());
+            self.put( str.clone(), "some value".to_string(),true);
             println!("{:?}",str);
         }
+        println!("{:?}",self.wal)
     }
 }

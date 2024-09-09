@@ -64,7 +64,9 @@ impl MemtableSkipList{
     pub fn get_value(&mut self,key:String)->Vec<u8>{
         let (exist,element)=self.data.search(key);
         if exist{
-            return element.value;
+            if element.tombstone==false{
+                return element.value;
+            }
         }
         return vec![]
     }

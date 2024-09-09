@@ -3,7 +3,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use entry_element::entry_element::extract;
 use crate::global_sstable_functions::get_key_and_position;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Index {
     pub file_path:String,
     pub volume:i32
@@ -21,13 +21,11 @@ impl Index {
 
         loop {
             let mut size_buffer = [0u8; 8];
-            // Try to read the size of the index entry (8 bytes)
             if index_reader.read_exact(&mut size_buffer).is_err() {
-                break; // Reached the end of file
+                break;
             }
             let index_size = u64::from_be_bytes(size_buffer);
 
-            // Read the key size
             let mut key_size_buffer = [0u8; 8];
             index_reader.read_exact(&mut key_size_buffer)?;
             let key_size = u64::from_be_bytes(key_size_buffer) as usize;

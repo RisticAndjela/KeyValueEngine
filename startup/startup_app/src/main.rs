@@ -1,5 +1,4 @@
-use std::{fs, io};
-use serde_json::Value;
+use std::{io};
 use crate::external_configuration::default_constants::take_from_json;
 use crate::representation_of_program_as_structure::Program;
 
@@ -29,20 +28,56 @@ fn main() {
 
     println!("\nYou have options to continue with previously saved data, or to initialize scripts again.\nWould you like to resume? [YES/NO] ",);
     let resume=take_input("");
-    let mut this=Program::new();
+    let mut this;
     if resume.to_lowercase()=="yes"{
-
+        this=Program::open_recent();
     }
     else{
+        this=Program::new();
         this.script();
     }
 
 
-    loop{
-        println!("\n \n{}",take_from_json("text","use").unwrap().as_str().unwrap());
-        let response=take_input("");
-        if response.to_lowercase()=="exit"{break;}
+    'pgt: loop {
 
+        println!("\n\n{}", take_from_json("text", "use").unwrap().as_str().unwrap());
+        let response = take_input("");
+
+        let mut parts = response.split_whitespace();
+        let command = match parts.next() {
+            Some(cmd) => cmd.to_lowercase(),
+            None => continue 'pgt,
+        };
+
+        match command.as_str() {
+            "put" => {
+                if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+                    this.put(key.to_string(), value.to_string(), false);
+                    this.provide_with_status();
+                } else {
+                    println!("Usage: PUT [key] [value]");
+                }
+            },
+            "delete" => {
+                if let Some(key) = parts.next() {
+                    this.delete(key.to_string());
+                    this.provide_with_status();
+                } else {
+                    println!("Usage: DELETE [key]");
+                }
+            },
+            "get" => {
+                if let Some(key) = parts.next() {
+                    let value = this.get(key.to_string());
+                    println!("VALUE: {:?}\n", value);
+                    this.provide_with_status();
+                } else {
+                    println!("Usage: GET [key]");
+                }
+            },
+            "exit" => break 'pgt,
+            _ => println!("Unknown command"),
+        }
     }
 
 }

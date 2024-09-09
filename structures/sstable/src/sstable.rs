@@ -1,7 +1,6 @@
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::ops::Add;
 use std::path::PathBuf;
 use bloom_filter::bloom_filter::BloomFilter;
 use bloom_filter::serialization::{deserialize_bloom, serialize_bloom};
@@ -13,7 +12,7 @@ use crate::summary::Summary;
 use entry_element::entry_element::{extract, EntryElement as record, EntryElement};
 use crate::global_sstable_functions::get_name;
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct SSTable{
     pub dir_path:String,
     pub data:Data,
@@ -128,7 +127,7 @@ impl SSTable{
     pub fn delete(&self, key_to_delete: String) -> SSTable {
         let mut path_buf = PathBuf::from(self.dir_path.clone());
         path_buf.pop();
-        let new_sstable = SSTable::new(path_buf.to_string_lossy().into_owned(), self.index.volume, self.summary.volume, self.bloom_filter.expected_elements, self.bloom_filter.false_positive_rate);
+        let mut new_sstable = SSTable::new(path_buf.to_string_lossy().into_owned(), self.index.volume, self.summary.volume, self.bloom_filter.expected_elements, self.bloom_filter.false_positive_rate);
         let data_file = OpenOptions::new().read(true).open(&self.data.file_path).expect("Failed to open data file for reading");
         let mut data_reader = BufReader::new(data_file);
         let new_data_file = OpenOptions::new().append(true).open(&new_sstable.data.file_path).expect("Failed to open new data file for writing");
@@ -141,7 +140,7 @@ impl SSTable{
             }
             let record_size = u64::from_be_bytes(size_buffer) as usize;
             let mut record_buffer = vec![0u8; record_size];
-            data_reader.read_exact(&mut record_buffer).expect("wrooong");
+            data_reader.read_exact(&mut record_buffer).expect("wrong");
             let mut record = record::deserialize(&record_buffer);
             if record.extract_number_from_key()==extract(key_to_delete.clone().as_str()){
                 record.tombstone=true;
@@ -156,6 +155,8 @@ impl SSTable{
         fs::copy(&self.summary.file_path, &new_sstable.summary.file_path).expect("Failed to copy summary");
         fs::copy(format!("{}/merkle.bin",&self.dir_path),format!("{}/merkle.bin",&new_sstable.dir_path)).expect("Failed to copy merkle");
         fs::copy(format!("{}/filter.bin",&self.dir_path),format!("{}/filter.bin",&new_sstable.dir_path)).expect("Failed to copy bloom");
+        new_sstable.index.file_path=format!("{}/index.bin",path_buf.to_string_lossy().into_owned());
+        new_sstable.summary.file_path=format!("{}/summary.bin",path_buf.to_string_lossy().into_owned());
 
         new_sstable
     }

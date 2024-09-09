@@ -19,7 +19,7 @@ mod tests {
         println!("{:?}",wal.get_where_stopped()); //14
         println!("{:?}",wal.get_where_stopped()); //15
         println!("{:?}",wal.get_where_stopped()); //16
-        println!("{:?}",wal.get_by_offset(205)); //17
+        println!("{:?}",wal.get_where_stopped()); //17
         println!("{:?}",wal.get_where_stopped()); //18
         println!("{:?}",wal.get_where_stopped()); //19 on 295?
         println!("{:?}",wal.get_where_stopped()); //13
@@ -127,10 +127,16 @@ mod tests {
         println!("{:?}",wal.get_where_stopped()); //13
         println!("{:?}",wal.get_where_stopped()); //14
         println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //15
+        println!("{:?}",wal.get_where_stopped()); //15
         println!("{:?}",wal.get_where_stopped()); //16
         let record20 = EntryElement::new("key20".to_string(),vec![1,2,3],123456789);
         wal.add_record(record20.clone());
         println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_by_offset(0)); //13
         println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
@@ -147,6 +153,16 @@ mod tests {
         let record21 = EntryElement::new("key21".to_string(),vec![1,2,3],123456789);
         wal.add_record(record21.clone());
         println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_by_offset(0)); //13
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
+        println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
@@ -164,6 +180,7 @@ mod tests {
         let record22 = EntryElement::new("key22".to_string(),vec![1,2,3],123456789);
         wal.add_record(record22.clone());
         println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_by_offset(0)); //13
         println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
@@ -181,6 +198,7 @@ mod tests {
     let record23 = EntryElement::new("key23".to_string(),vec![1,2,3],123456789);
         wal.add_record(record23.clone());
         println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_by_offset(0)); //13
         println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
@@ -198,6 +216,7 @@ mod tests {
         let record24 = EntryElement::new("key24".to_string(),vec![1,2,3],123456789);
         wal.add_record(record24.clone());
         println!("\n\nNEW ROUND ++1\n\n");
+        println!("{:?}",wal.get_by_offset(0)); //13
         println!("{:?}",wal.get_where_stopped()); //none
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
@@ -208,6 +227,21 @@ mod tests {
         println!("{:?}",wal.get_where_stopped()); //16
         println!("{:?}",wal.get_where_stopped()); //17
         println!("{:?}",wal.get_where_stopped()); //18
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
+        println!("{:?}",wal.get_where_stopped()); //19
         println!("{:?}",wal.get_where_stopped()); //19
         println!("{:?}",wal.get_where_stopped()); //20
         println!("{:?}",wal.get_where_stopped()); //none

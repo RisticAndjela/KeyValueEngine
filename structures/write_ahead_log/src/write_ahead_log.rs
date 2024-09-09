@@ -13,14 +13,8 @@ pub struct WriteAheadLog {
     pub max_offset:u64
 }
 impl WriteAheadLog {
-    pub fn open(storage_path:String,segment_length:u64, max_segments_in_memory: u64)->Self{
-        let mut wal =WriteAheadLog{storage_path,segment_length,offset:0,max_segments_in_memory,max_offset:0};
-        for one in wal.get_all_files(){
-            let file = File::open(&one).expect("Failed to open WAL file");
-            let mut reader = BufReader::new(file);
-            let total_size = reader.get_ref().metadata().unwrap().len();
-            wal.max_offset+=total_size;
-        }
+    pub fn open(storage_path:String,segment_length:u64, max_segments_in_memory: u64,max_offset:u64)->Self{
+        let mut wal =WriteAheadLog{storage_path:storage_path.clone(),segment_length,offset:0,max_segments_in_memory,max_offset};
         wal
     }
     pub fn new(directory_path: String, segment_length: u64, max_segments_in_memory: u64) -> Self {
@@ -186,7 +180,7 @@ impl WriteAheadLog {
         let mut result :Option<EntryElement>= None;
         let (this_file_path,file_offset)=self.get_file_and_offset_of_current_file(offset);
         let index=extract_index_from_name(this_file_path.as_str()) as u64;
-        println!("\nfile: {this_file_path}, offset: {file_offset}");
+        // println!("\nfile: {this_file_path}, file offset: {file_offset}, offset: {offset}");
 
         let file = File::open(&this_file_path).expect("Failed to open WAL file");
         let mut reader = BufReader::new(file);

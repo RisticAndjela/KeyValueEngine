@@ -3,7 +3,7 @@ use std::io::{BufReader, Read};
 use entry_element::entry_element::extract;
 use crate::global_sstable_functions::get_key_and_position;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Summary{
     pub file_path:String,
     pub volume:i32

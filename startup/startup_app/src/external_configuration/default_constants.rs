@@ -140,3 +140,10 @@ pub fn get_wal_max_segment_size() -> u64 {
     if json.is_none(){return WAL_MAX_SEGMENTS_IN_MEMORY}
     json.unwrap().to_string().parse::<u64>().unwrap()
 }
+pub fn get_wal_max_offset()->u64{
+    let data = fs::read_to_string(format!("{STORAGE_PATH}/metadata.json")).expect("Unable to read file");
+    let json: Value = serde_json::from_str(&data).expect("Unable to parse JSON");
+    let max_offset_wal_str = json["max_offset_wal"].as_str().expect("Value should be a string");
+    let max_offset_wal = max_offset_wal_str.parse::<u64>().expect("Value should be a valid u64");
+    max_offset_wal
+}
